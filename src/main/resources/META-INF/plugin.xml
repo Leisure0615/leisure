@@ -15,4 +15,11 @@
     <applicationListeners>
         <listener class="com.github.leisure0615.leisure.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
+
+    <actions>
+        <group id="MyPlugin.SampleMenu" text="_Sample Menu" description="Sample menu">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"  />
+            <action id="Myplugin.Textboxes" class="com.fyl.leisure.TextBoxes" text="GenerateTable" description="A test menu item" />
+        </group>
+    </actions>
 </idea-plugin>
