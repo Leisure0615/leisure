@@ -19,17 +19,19 @@ version = properties("pluginVersion").get()
 // Configure project's dependencies
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
 //    implementation(libs.annotations)
     implementation("com.github.javaparser:javaparser-core:3.25.10")
-    implementation("mysql:mysql-conector:8.0.28")
+    implementation("mysql:mysql-connector-java:8.0.27")
     implementation("com.baomidou:mybatis-plus-boot-starter:3.5.2")
     implementation("com.github.yulichang:mybatis-plus-join:1.4.6")
     implementation("com.baomidou:mybatis-plus-generator:3.3.2")
     implementation("io.springfox:springfox-swagger2:2.9.2")
+    implementation("org.projectlombok:lombok:1.18.20")
+    implementation("org.apache.velocity:velocity:1.7")
+    implementation("velocity-tools:velocity-tools:1.4")
 }
 
 // Set the JVM language level used to build the project.

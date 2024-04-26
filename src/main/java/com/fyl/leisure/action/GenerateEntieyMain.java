@@ -1,5 +1,27 @@
 package com.fyl.leisure.action;
 
+
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.generator.AutoGenerator;
+import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
+import com.baomidou.mybatisplus.generator.config.GlobalConfig;
+import com.baomidou.mybatisplus.generator.config.StrategyConfig;
+import com.baomidou.mybatisplus.generator.config.TemplateConfig;
+import com.baomidou.mybatisplus.generator.config.po.TableFill;
+import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+import com.github.yulichang.base.MPJBaseService;
+import com.github.yulichang.base.MPJBaseServiceImpl;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author tangzhipeng
  * @project leisure
@@ -7,13 +29,12 @@ package com.fyl.leisure.action;
  * @date 4/26/2024 1:59 PM
  */
 public class GenerateEntieyMain extends AnAction {
-    public GenerateOperationFiles() {
-
+    public GenerateEntieyMain() {
         super("GenerateEntieyMain");
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+    public void actionPerformed(AnActionEvent e) {
         //获取当前项目目录
         Project project = e.getData(PlatformDataKeys.PROJECT);
         VirtualFile projectDir = project.getBaseDir();
@@ -30,16 +51,16 @@ public class GenerateEntieyMain extends AnAction {
     public static final String USER_NAME = "root";
     public static final String USER_PSW = "123456";
     //    public static final String DATABASE_URL = "jdbc:mySql://" + DATABASES_PATH + "/" + DATABASES_NAME + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
-    public static final String DATABASE_URL = "jdbc:mysql://" + localhost + "3306" + "/" + "blog" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
+    public static final String DATABASE_URL = "jdbc:mysql://" + localhost + "3306" + "/" + "poetize" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
     public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
 
     public static void generateMethod() {
         AutoGenerator mpg = new AutoGenerator();
-        TemplateConfig templateconfig = new Templateconfig();
-        templateConfig.setXml(null).setController(null);
-        mpj.setTemplate(templateConfig);
+        TemplateConfig templateconfig = new TemplateConfig();
+        templateconfig.setXml(null).setController(null);
+        mpg.setTemplate(templateconfig);
         mpg.setPackageInfo(packagecanfig());//全局配置
-        mpg.setGlobalconfig(globdLcenfig());//数据源配置
+        mpg.setGlobalConfig(globdLcenfig());//数据源配置
         mpg.setDataSource(datasource());
         // 策略配置
         mpg.setStrategy(strategy());
@@ -57,41 +78,41 @@ public class GenerateEntieyMain extends AnAction {
         return dsc;
     }
 
-    private static GLobalConfig globalConfig() {
+    private static GlobalConfig globalConfig() {
         GlobalConfig gc = new GlobalConfig();
         gc.setIdType(IdType.INPUT);
         gc.setOpen(false);
-        gc.setSwagger2(SWAGGER_ENABLED);
+        gc.setSwagger2(SWAGGER_ENABLE);
 //        gc.set0utputDir(OUT_PATH + "\\" + "MODULE_NAME" + "\\src\\main\\java");    //生成文件存放的位置
-        gc.set0utputDir("\\src\\main\\java");    //生成文件存放的位置
+        gc.setOutputDir("\\src\\main\\java");    //生成文件存放的位置
         gc.setFileOverride(RECOVER_ENABLE);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);
         gc.setBaseResultMap(true);
         gc.setBaseColumnList(true);
         gc.setAuthor("tangzhipeng");
-        gc.setServiceNane("%sDao");// service 命名方式
-        gc.setServiceImplNane("%sDaoImpl");// service impl争名方式
+        gc.setServiceName("%sDao");// service 命名方式
+        gc.setServiceImplName("%sDaoImpl");// service impl争名方式
         gc.setMapperName("%sMapper");
         return gc;
     }
 
     private static StrategyConfig strategy() {
-        strategyConfig strategy = new StrategyConfig();
+        StrategyConfig strategy = new StrategyConfig();
         strategy.setLogicDeleteFieldName("delete_fiag");
         strategy.setTablePrefix(""); // 去掉表名前缓
-        strategy.setNaming(NamingStrategy.underline_to_comel);//表名生成策略(underline_to_camel,下划线转驼峰命名)
+        strategy.setNaming(NamingStrategy.underline_to_camel);//表名生成策略(underline_to_camel,下划线转驼峰命名)
         strategy.setExclude("interface_info");
-        strategy.setColumnNaming(NamingStrategy.underLine_to_camel);
-        strategy.setSuperControllerclass("nlo.ssarpode aase,framemark.base.BaseController");//自定义继承的Controller类全移
+        strategy.setColumnNaming(NamingStrategy.underline_to_camel);
+        strategy.setSuperControllerClass("nlo.ssarpode aase,framemark.base.BaseController");//自定义继承的Controller类全移
         strategy.setEntityLombokModel(true);
         strategy.setSuperMapperClass("com.github.yuichang.base.MPJBaseMapper");
         strategy.setSuperServiceClass(MPJBaseService.class);
         strategy.setSuperServiceImplClass(MPJBaseServiceImpl.class);
         strategy.setChainModel(true);
         List<TableFill> tableFills = new ArrayList<>();
-        tableFills.add(new TableFill("tereate_user_id", FieldFilL.INSERT));
-        tableFills.add(new TableFill("create_user_name", FieldFilL.INSERT));
+        tableFills.add(new TableFill("tereate_user_id", FieldFill.INSERT));
+        tableFills.add(new TableFill("create_user_name", FieldFill.INSERT));
         tableFills.add(new TableFill("create_time ", FieldFill.INSERT));
         tableFills.add(new TableFill("update_user_id", FieldFill.INSERT_UPDATE));
         tableFills.add(new TableFill("update_user_name", FieldFill.INSERT_UPDATE));

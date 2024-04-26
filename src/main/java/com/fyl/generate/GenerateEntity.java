@@ -13,7 +13,6 @@ import com.github.yulichang.base.MPJBaseServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
-
 /**
  * @author tangzhipeng
  * @project leisure
@@ -28,7 +27,7 @@ public class GenerateEntity {
     public static final String USER_NAME = "root";
     public static final String USER_PSW = "123456";
     //    public static final String DATABASE_URL = "jdbc:mySql://" + DATABASES_PATH + "/" + DATABASES_NAME + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
-    public static final String DATABASE_URL = "jdbc:mysql://" + localhost + "3306" + "/" + "blog" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
+    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + "3306" + "/" + "blog" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
     public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
 
     public static void generateMethod() {
@@ -75,7 +74,7 @@ public class GenerateEntity {
     }
 
     private static StrategyConfig strategy() {
-        strategyConfig strategy = new StrategyConfig();
+        StrategyConfig strategy = new StrategyConfig();
         strategy.setLogicDeleteFieldName("delete_fiag");
         strategy.setTablePrefix(""); // 去掉表名前缓
         strategy.setNaming(NamingStrategy.underline_to_comel);//表名生成策略(underline_to_camel,下划线转驼峰命名)

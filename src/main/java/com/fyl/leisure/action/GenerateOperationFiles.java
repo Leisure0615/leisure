@@ -1,12 +1,11 @@
 package com.fyl.leisure.action;
 
+import com.fyl.leisure.vo.FiledVO;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -14,10 +13,17 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -43,6 +49,7 @@ public class GenerateOperationFiles extends AnAction {
         if (projectDir == null) {
             return;
         }
+        List<FiledVO> filedVOS = new ArrayList<>();
         Object data = e.getDataContext().getData("virtualFile");
         if (data instanceof VirtualFile) {
             VirtualFile clickedFile = (VirtualFile) data;
@@ -51,27 +58,22 @@ public class GenerateOperationFiles extends AnAction {
                 System.out.println("Clicked file path: " + clickedFile.getPath());
                 System.out.println("Clicked file name: " + clickedFile.getName());
                 try (FileInputStream fileInputStream = new FileInputStream(clickedFile.getPath())) {
-                    System.out.println("第一" + fileInputStream);
                     ParseResult<CompilationUnit> result = new JavaParser().parse(fileInputStream);
-                    System.out.println("第二" + result);
                     if (result.isSuccessful()) {
                         CompilationUnit compilationUnit = result.getResult().orElse(null);
-                        List<ClassOrInterfaceDeclaration> all = compilationUnit.findAll(ClassOrInterfaceDeclaration.class);
-                        System.out.println("第三" + all);
                         if (compilationUnit != null) {
                             ClassOrInterfaceDeclaration targetClass = compilationUnit.getClassByName(/*clickedFile.getName()*/"Article").orElse(null);
                             System.out.println("第四" + targetClass);
                             if (targetClass != null) {
                                 for (FieldDeclaration field : targetClass.getFields()) {
-                                    String filedType = field.getVariables().get(0).getType().asString();
-                                    String filedName = field.getVariables().get(0).getName().asString();
-                                    NodeList<AnnotationExpr> annotations = field.getAnnotations();
-                                    System.out.println(filedType);
-                                    System.out.println(filedName);
-                                    System.out.println(annotations);
+                                    FiledVO filedVO = new FiledVO();
+                                    filedVO.setFiledName(field.getVariables().get(0).getName().asString());
+                                    filedVO.setFiledType(field.getVariables().get(0).getType().asString());
+                                    filedVO.setFiledAnnotation(field.getAnnotations());
+                                    filedVOS.add(filedVO);
                                 }
+                                System.out.println(filedVOS);
                             }
-
                         }
                     }
                 } catch (IOException ex) {
@@ -79,15 +81,24 @@ public class GenerateOperationFiles extends AnAction {
                 }
             }
         }
-        //生成文件
+        //构目
         FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+        //获取选中的目
         VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, projectDir);
         if (virtualFile != null && virtualFile.isDirectory()) {
             System.out.println("Selected directory: " + virtualFile.getPath());
+            //生成文件
+            try {
+                createController(virtualFile,filedVOS);
+                createService(virtualFile);
+                createModel(virtualFile);
+                createController(virtualFile,filedVOS);
 
-            createFolders(virtualFile, "Folder1", "Folder2", "Folder3");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         } else {
-//            System.out.println("No directory selected");
+            System.out.println("No directory selected");
         }
     }
 
@@ -96,22 +107,34 @@ public class GenerateOperationFiles extends AnAction {
      * 生成文件
      *
      * @param parentDirectory
-     * @param folderNames
      */
-    private static void createFolders(VirtualFile parentDirectory, String... folderNames) {
+    private static void createFolders(VirtualFile parentDirectory) throws IOException {
+//        createController(parentDirectory, filedVOS);
+        createService(parentDirectory);
+        createModel(parentDirectory);
+    }
+    private static void createController(VirtualFile parentDirectory, List<FiledVO> filedVOS) throws IOException {
+        VirtualFile controller = parentDirectory.createChildDirectory(null, "controller");
+        VelocityEngine velocityEngine = new VelocityEngine();
+        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER,controller.getPath());
+        velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "com.fyl.leisure.log.CustomLogChute");
+        velocityEngine.init();
+        Template template = velocityEngine.getTemplate("template/DTO.vm");
+        VelocityContext ctx = new VelocityContext();
+        ctx.put("className", "Article");
+        ctx.put("filedList",filedVOS);
+        StringWriter sw = new StringWriter();
+        template.merge(ctx,sw);
+    }
 
-        for (String folderName : folderNames) {
-            try {
+    private static void createService(VirtualFile parentDirectory) throws IOException {
+        VirtualFile service = parentDirectory.createChildDirectory(null, "service");
+    }
 
-                VirtualFile newFolder = parentDirectory.createChildDirectory(null, folderName);
-                if (newFolder != null) {
-                    System.out.println("Folder created: " + newFolder.getPath());
-                } else {
-                    System.out.println("Failed to create folder: " + folderName);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    private static void createModel(VirtualFile parentDirectory) throws IOException {
+        VirtualFile model = parentDirectory.createChildDirectory(null, "model");
+        VirtualFile dto = model.createChildDirectory(null, "dto");
+        VirtualFile vo = model.createChildDirectory(null, "vo");
     }
 }
