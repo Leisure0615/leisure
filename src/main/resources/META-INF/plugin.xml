@@ -19,7 +19,7 @@
     <actions>
         <group id="MyPlugin.SampleMenu" text="_Sample Menu" description="Sample menu">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"  />
-            <action id="Myplugin.Textboxes" class="com.fyl.leisure.TextBoxes" text="GenerateTable" description="A test menu item" />
+            <action id="Myplugin.Textboxes" class="com.fyl.leisure.action.GenerateOperationFiles" text="GenerateTable" description="A test menu item" />
         </group>
     </actions>
 </idea-plugin>
