@@ -79,7 +79,7 @@ public class GenerateEntieyMain extends AnAction {
     }
 
     private static PackageConfig packageConfig() {
-// 包配置
+        // 包配置
         PackageConfig pc = new PackageConfig();
         pc.setParent(PARENT_PACKAGE);//父包名
         pc.setService(SERVICE_PACKAGE_Service);
