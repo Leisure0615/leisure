@@ -51,7 +51,7 @@ public class GenerateEntieyMain extends AnAction {
     public static final String USER_NAME = "root";
     public static final String USER_PSW = "123456";
     //    public static final String DATABASE_URL = "jdbc:mySql://" + DATABASES_PATH + "/" + DATABASES_NAME + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
-    public static final String DATABASE_URL = "jdbc:mysql://" + localhost + "3306" + "/" + "poetize" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
+    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + "3306" + "/" + "poetize" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
     public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
 
     public static void generateMethod() {
@@ -76,6 +76,17 @@ public class GenerateEntieyMain extends AnAction {
         dsc.setPassword(USER_PSW);
         dsc.setUrl(DATABASE_URL);
         return dsc;
+    }
+
+    private static PackageConfig packageConfig() {
+// 包配置
+        PackageConfig pc = new PackageConfig();
+        pc.setParent(PARENT_PACKAGE);//父包名
+        pc.setService(SERVICE_PACKAGE_Service);
+        pc.setServiceImpl(SERVICE_IMPL_PACKAGE); // Service In
+        pc.setMapper(MAPPER_PACKAGE);    // Mapper包名
+        pc.setEntity(ENTITY_PACKAGE);
+        return pc;
     }
 
     private static GlobalConfig globalConfig() {
