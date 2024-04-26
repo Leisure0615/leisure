@@ -19,11 +19,12 @@ version = properties("pluginVersion").get()
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    mavenLocal()
 }
-
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
 //    implementation(libs.annotations)
+    implementation("com.github.javaparser:javaparser-core:3.25.10")
 }
 
 // Set the JVM language level used to build the project.
