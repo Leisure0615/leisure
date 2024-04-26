@@ -25,6 +25,10 @@ repositories {
 dependencies {
 //    implementation(libs.annotations)
     implementation("com.github.javaparser:javaparser-core:3.25.10")
+    implementation("mysql:mysql-conector:8.0.28")
+    implementation("com.baomidou:mybatis-plus-boot-starter:3.5.2")
+    implementation("com.baomidou:mybatis-plus-generator:3.3.2")
+    implementation ("io.springfox:springfox-swagger2:2.9.2")
 }
 
 // Set the JVM language level used to build the project.
@@ -72,7 +76,7 @@ tasks {
             val start = "<!-- Plugin description -->"
             val end = "<!-- Plugin description end -->"
 
-            with (it.lines()) {
+            with(it.lines()) {
                 if (!containsAll(listOf(start, end))) {
                     throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
                 }
@@ -85,10 +89,10 @@ tasks {
         changeNotes = properties("pluginVersion").map { pluginVersion ->
             with(changelog) {
                 renderItem(
-                    (getOrNull(pluginVersion) ?: getUnreleased())
-                        .withHeader(false)
-                        .withEmptySections(false),
-                    Changelog.OutputType.HTML,
+                        (getOrNull(pluginVersion) ?: getUnreleased())
+                                .withHeader(false)
+                                .withEmptySections(false),
+                        Changelog.OutputType.HTML,
                 )
             }
         }
