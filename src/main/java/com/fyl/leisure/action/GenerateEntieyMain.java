@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.generator.AutoGenerator;
-import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
-import com.baomidou.mybatisplus.generator.config.GlobalConfig;
-import com.baomidou.mybatisplus.generator.config.StrategyConfig;
-import com.baomidou.mybatisplus.generator.config.TemplateConfig;
+import com.baomidou.mybatisplus.generator.config.*;
 import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.github.yulichang.base.MPJBaseService;
@@ -47,11 +44,11 @@ public class GenerateEntieyMain extends AnAction {
     static final String OUT_PATH = System.getProperty("user.dir");
     static final String MODULE_NAME = "alp-scaffolding framework";
     static final String DATABASES_PATH = "10.20.32.30:3306";
-    //NOSONAR 仅特例，用于代码生成1个用法static final String DATABASES_NAME = "alp scaffolding db",2 个用法
+    //NOSONAR 仅特例，用于代码生成1个用法static final String DATABASES_NAME = "alp scaffolding db",2 个用
     public static final String USER_NAME = "root";
     public static final String USER_PSW = "123456";
     //    public static final String DATABASE_URL = "jdbc:mySql://" + DATABASES_PATH + "/" + DATABASES_NAME + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
-    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + "3306" + "/" + "poetize" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
+    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + ":3306" + "/" + "poetize" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
     public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
 
     public static void generateMethod() {
@@ -59,15 +56,25 @@ public class GenerateEntieyMain extends AnAction {
         TemplateConfig templateconfig = new TemplateConfig();
         templateconfig.setXml(null).setController(null);
         mpg.setTemplate(templateconfig);
-        mpg.setPackageInfo(packagecanfig());//全局配置
-        mpg.setGlobalConfig(globdLcenfig());//数据源配置
-        mpg.setDataSource(datasource());
+        mpg.setPackageInfo(packageConfig());//全局配置
+        mpg.setGlobalConfig(globalConfig());//数据源配
+        mpg.setDataSource(dataSource());
         // 策略配置
         mpg.setStrategy(strategy());
         // 执行生成
         mpg.execute();
     }
 
+    private static PackageConfig packageConfig() {
+        // 包配
+        PackageConfig pc = new PackageConfig();
+        pc.setParent(PARENT_PACKAGE);//父包
+        pc.setService(SERVICE_PACKAGE);
+        pc.setServiceImpl(SERVICE_IMPL_PACKAGE); // Service In
+        pc.setMapper(MAPPER_PACKAGE);    // Mapper包名
+        pc.setEntity(ENTITY_PACKAGE);
+        return pc;
+    }
     private static DataSourceConfig dataSource() {
         DataSourceConfig dsc = new DataSourceConfig();
         dsc.setDbType(DbType.MYSQL);//mysol生成用DhType.MYSQL
@@ -78,24 +85,13 @@ public class GenerateEntieyMain extends AnAction {
         return dsc;
     }
 
-    private static PackageConfig packageConfig() {
-        // 包配置
-        PackageConfig pc = new PackageConfig();
-        pc.setParent(PARENT_PACKAGE);//父包名
-        pc.setService(SERVICE_PACKAGE_Service);
-        pc.setServiceImpl(SERVICE_IMPL_PACKAGE); // Service In
-        pc.setMapper(MAPPER_PACKAGE);    // Mapper包名
-        pc.setEntity(ENTITY_PACKAGE);
-        return pc;
-    }
-
     private static GlobalConfig globalConfig() {
         GlobalConfig gc = new GlobalConfig();
         gc.setIdType(IdType.INPUT);
         gc.setOpen(false);
         gc.setSwagger2(SWAGGER_ENABLE);
-//        gc.set0utputDir(OUT_PATH + "\\" + "MODULE_NAME" + "\\src\\main\\java");    //生成文件存放的位置
-        gc.setOutputDir("\\src\\main\\java");    //生成文件存放的位置
+//        gc.set0utputDir(OUT_PATH + "\\" + "MODULE_NAME" + "\\src\\main\\java");    //生成文件存放的位
+        gc.setOutputDir("\\src\\main\\java");    //生成文件存放的位
         gc.setFileOverride(RECOVER_ENABLE);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);
@@ -115,7 +111,7 @@ public class GenerateEntieyMain extends AnAction {
         strategy.setNaming(NamingStrategy.underline_to_camel);//表名生成策略(underline_to_camel,下划线转驼峰命名)
         strategy.setExclude("interface_info");
         strategy.setColumnNaming(NamingStrategy.underline_to_camel);
-        strategy.setSuperControllerClass("nlo.ssarpode aase,framemark.base.BaseController");//自定义继承的Controller类全移
+        strategy.setSuperControllerClass("nlo.ssarpode aase,framemark.base.BaseController");//自定义继承的Controller类全
         strategy.setEntityLombokModel(true);
         strategy.setSuperMapperClass("com.github.yuichang.base.MPJBaseMapper");
         strategy.setSuperServiceClass(MPJBaseService.class);
@@ -132,13 +128,13 @@ public class GenerateEntieyMain extends AnAction {
         return strategy;
     }
 
-    //= -==== ==不需要修改配置======
-    // 开启swagger2模式
-    public static final Boolean SWAGGER_ENABLE = true;//是否覆盖已有文件1个用法
-    public static final Boolean RECOVER_ENABLE = true;//dao包名1个用法
+    //= -==== ==不需要修改配======
+    // 启swagger2模式
+    public static final Boolean SWAGGER_ENABLE = true;//是否覆盖已有文件1个用
+    public static final Boolean RECOVER_ENABLE = true;//dao包名1个用
     public static final String SERVICE_PACKAGE = "dao";
-    public static final String SERVICE_IMPL_PACKAGE = "dao.impl";//mapper包名1个用法
-    public static final String MAPPER_PACKAGE = "mapper";//entity包名1个用法
+    public static final String SERVICE_IMPL_PACKAGE = "dao.impl";//mapper包名1个用
+    public static final String MAPPER_PACKAGE = "mapper";//entity包名1个用
     public static final String ENTITY_PACKAGE = "entity";
 
 }
