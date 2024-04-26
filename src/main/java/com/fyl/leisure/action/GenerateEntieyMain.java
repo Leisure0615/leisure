@@ -1,26 +1,28 @@
-package com.fyl.generate;
-
-import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.core.toolkit.AES;
-import com.baomidou.mybatisplus.generator.AutoGenerator;
-import com.baomidou.mybatisplus.generator.config.*;
-import com.baomidou.mybatisplus.generator.config.po.TableFill;
-import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
-import com.github.yulichang.base.MPJBaseService;
-import com.github.yulichang.base.MPJBaseServiceImpl;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.fyl.leisure.action;
 
 /**
  * @author tangzhipeng
  * @project leisure
  * @description:
- * @date 4/26/2024 11:41 AM
+ * @date 4/26/2024 1:59 PM
  */
-public class GenerateEntity {
+public class GenerateEntieyMain extends AnAction {
+    public GenerateOperationFiles() {
+
+        super("GenerateEntieyMain");
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+        //获取当前项目目录
+        Project project = e.getData(PlatformDataKeys.PROJECT);
+        VirtualFile projectDir = project.getBaseDir();
+        if (projectDir == null) {
+            return;
+        }
+        generateMethod();
+    }
+
     static final String OUT_PATH = System.getProperty("user.dir");
     static final String MODULE_NAME = "alp-scaffolding framework";
     static final String DATABASES_PATH = "10.20.32.30:3306";

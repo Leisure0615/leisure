@@ -22,4 +22,15 @@
             <action id="Myplugin.Textboxes" class="com.fyl.leisure.action.GenerateOperationFiles" text="GenerateTable" description="A test menu item" />
         </group>
     </actions>
+
+    <actions>
+        <!-- 定义 id, 对应类和显示的文本 -->
+        <action id="GenerateEntieyMain" class="com.fyl.leisure.action.GenerateEntieyMain" text="GenerateEntieyMain">
+            <!-- 添加到编辑器菜单的第一项 -->
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <!-- 可通过 ctrl + H 快捷键触发 -->
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl H"/>
+        </action>
+    </actions>
+
 </idea-plugin>
