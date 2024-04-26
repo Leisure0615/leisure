@@ -9,6 +9,9 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -17,6 +20,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.log.NullLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,10 +93,10 @@ public class GenerateOperationFiles extends AnAction {
             System.out.println("Selected directory: " + virtualFile.getPath());
             //生成文件
             try {
-                createController(virtualFile,filedVOS);
+                createController(virtualFile, filedVOS);
                 createService(virtualFile);
                 createModel(virtualFile);
-                createController(virtualFile,filedVOS);
+                createController(virtualFile, filedVOS);
 
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -113,19 +117,25 @@ public class GenerateOperationFiles extends AnAction {
         createService(parentDirectory);
         createModel(parentDirectory);
     }
+
     private static void createController(VirtualFile parentDirectory, List<FiledVO> filedVOS) throws IOException {
         VirtualFile controller = parentDirectory.createChildDirectory(null, "controller");
+
+        Application applicationManager = ApplicationManager.getApplication();
         VelocityEngine velocityEngine = new VelocityEngine();
-        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER,controller.getPath());
-        velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-        velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "com.fyl.leisure.log.CustomLogChute");
-        velocityEngine.init();
+        applicationManager.runWriteAction(() -> {
+                    velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, controller.getPath());
+//                    velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+                    velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, new NullLogChute());
+                    velocityEngine.init();
+                }
+        );
         Template template = velocityEngine.getTemplate("template/DTO.vm");
         VelocityContext ctx = new VelocityContext();
         ctx.put("className", "Article");
-        ctx.put("filedList",filedVOS);
+        ctx.put("filedList", filedVOS);
         StringWriter sw = new StringWriter();
-        template.merge(ctx,sw);
+        template.merge(ctx, sw);
     }
 
     private static void createService(VirtualFile parentDirectory) throws IOException {
