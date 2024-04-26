@@ -27,8 +27,9 @@ dependencies {
     implementation("com.github.javaparser:javaparser-core:3.25.10")
     implementation("mysql:mysql-conector:8.0.28")
     implementation("com.baomidou:mybatis-plus-boot-starter:3.5.2")
+    implementation("com.github.yulichang:mybatis-plus-join:1.4.6")
     implementation("com.baomidou:mybatis-plus-generator:3.3.2")
-    implementation ("io.springfox:springfox-swagger2:2.9.2")
+    implementation("io.springfox:springfox-swagger2:2.9.2")
 }
 
 // Set the JVM language level used to build the project.
