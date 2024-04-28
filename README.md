@@ -17,13 +17,13 @@
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 <!-- Plugin description -->
-这款IDEA插件是一款强大的代码生成工具，旨在帮助开发人员快速生成实体类、dao层、service层、mapper层和controller层的代码。通过该插件，用户能够轻松地生成各种类型的Java代码，省去了手动编写重复代码的繁琐过程，极大地提高了开发效率。
+This IDEA plugin is a powerful code generation tool designed to help developers quickly generate code for entity classes, DAO layer, service layer, mapper layer, and controller layer. Through this plugin, users can easily generate various types of Java code, eliminating the tedious process of manually writing repetitive code and greatly improving development efficiency.
 
-该插件具有简洁直观的界面，用户友好，易于上手。用户只需在指定位置设置好相关配置，填写相应的信息，即可一键生成所需代码。
+The plugin features a simple and intuitive interface, user-friendly and easy to use. Users only need to set up relevant configurations in specified locations, fill in the corresponding information, and generate the required code with just one click.
 
-除了生成代码外，该插件还提供了代码格式化、代码注释等功能，帮助用户保持代码风格的统一，提升代码的可读性和可维护性。
+In addition to code generation, the plugin also provides functions such as code formatting and code commenting, helping users maintain consistent code style and improve code readability and maintainability.
 
-总之，这款IDEA插件是一款高效、便捷的代码生成工具，为开发人员节省了大量的时间和精力，让开发工作变得更加轻松和高效。
+In summary, this IDEA plugin is an efficient and convenient code generation tool that saves developers a lot of time and effort, making development work easier and more efficient.
 <!-- Plugin description end -->
 
 ## Installation
