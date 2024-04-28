@@ -25,9 +25,9 @@ import java.util.List;
  * @description:
  * @date 4/26/2024 1:59 PM
  */
-public class GenerateEntieyMain extends AnAction {
-    public GenerateEntieyMain() {
-        super("GenerateEntieyMain");
+public class GenerateEntityMain extends AnAction {
+    public GenerateEntityMain() {
+        super("GenerateEntityMain");
     }
 
     @Override
@@ -48,7 +48,7 @@ public class GenerateEntieyMain extends AnAction {
     public static final String USER_NAME = "root";
     public static final String USER_PSW = "123456";
     //    public static final String DATABASE_URL = "jdbc:mySql://" + DATABASES_PATH + "/" + DATABASES_NAME + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
-    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + ":3306" + "/" + "poetize" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
+    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + ":3306" + "/" + "blog" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC&allowPublicKeyRetrieval=true";
     public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
 
     public static void generateMethod() {
@@ -61,8 +61,13 @@ public class GenerateEntieyMain extends AnAction {
         mpg.setDataSource(dataSource());
         // 策略配置
         mpg.setStrategy(strategy());
+        //解决模板引擎初始化失败的问题
+        final ClassLoader oldContextClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(GenerateEntityMain.class.getClassLoader());
         // 执行生成
         mpg.execute();
+        Thread.currentThread().setContextClassLoader(oldContextClassLoader);
+
     }
 
     private static PackageConfig packageConfig() {
@@ -75,6 +80,7 @@ public class GenerateEntieyMain extends AnAction {
         pc.setEntity(ENTITY_PACKAGE);
         return pc;
     }
+
     private static DataSourceConfig dataSource() {
         DataSourceConfig dsc = new DataSourceConfig();
         dsc.setDbType(DbType.MYSQL);//mysol生成用DhType.MYSQL
@@ -91,7 +97,7 @@ public class GenerateEntieyMain extends AnAction {
         gc.setOpen(false);
         gc.setSwagger2(SWAGGER_ENABLE);
 //        gc.set0utputDir(OUT_PATH + "\\" + "MODULE_NAME" + "\\src\\main\\java");    //生成文件存放的位
-        gc.setOutputDir("\\src\\main\\java");    //生成文件存放的位
+        gc.setOutputDir("D:\\ASUS\\桌面\\java");    //生成文件存放的位
         gc.setFileOverride(RECOVER_ENABLE);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);
@@ -118,7 +124,7 @@ public class GenerateEntieyMain extends AnAction {
         strategy.setSuperServiceImplClass(MPJBaseServiceImpl.class);
         strategy.setChainModel(true);
         List<TableFill> tableFills = new ArrayList<>();
-        tableFills.add(new TableFill("tereate_user_id", FieldFill.INSERT));
+        tableFills.add(new TableFill("create_user_id", FieldFill.INSERT));
         tableFills.add(new TableFill("create_user_name", FieldFill.INSERT));
         tableFills.add(new TableFill("create_time ", FieldFill.INSERT));
         tableFills.add(new TableFill("update_user_id", FieldFill.INSERT_UPDATE));

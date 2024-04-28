@@ -21,7 +21,7 @@
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"  />
             <action id="Myplugin.Textboxes" class="com.fyl.leisure.action.GenerateOperationFiles" text="GenerateTable" description="A test menu item" />
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"  />
-            <action id="Myplugin.GenerateEntieyMain" class="com.fyl.leisure.action.GenerateEntieyMain" text="GenerateEntieyMain" description="A test menu item" />
+            <action id="Myplugin.GenerateEntityMain" class="com.fyl.leisure.action.GenerateEntityMain" text="生成实体类" description="A test menu item" />
         </group>
     </actions>
 </idea-plugin>
