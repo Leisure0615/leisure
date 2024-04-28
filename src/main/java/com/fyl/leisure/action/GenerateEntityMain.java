@@ -45,7 +45,8 @@ public class GenerateEntityMain extends AnAction {
         // 创建一个对话框
         DialogBuilder builder = new DialogBuilder(project);
         builder.setTitle("请输入MySQL数据库信息和作者信息");
-        JPanel panel = new JPanel(new GridLayout(5, 2));
+        // 界面布局
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
 
         // 添加文本框和标签
         JTextField ipField = new JTextField();
@@ -74,7 +75,7 @@ public class GenerateEntityMain extends AnAction {
             // 弹出文件目录选择器
             FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
             descriptor.setTitle("选择目录");
-            descriptor.setDescription("选择要生成方法的src/main/java目录（选择到Java那层）");
+            descriptor.setDescription("选择要生成方法的src/main/java目录（选择到java文件层）");
             VirtualFile[] chosenFiles = FileChooser.chooseFiles(descriptor, project, null);
             // 如果用户取消选择目录，则不执行后续操作
             if (chosenFiles.length == 0) {
@@ -85,7 +86,7 @@ public class GenerateEntityMain extends AnAction {
                 generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-                Messages.showInfoMessage("生成代码成功", "成功");
+                Messages.showInfoMessage("生成代码成功。<注意：代码已生成在文件中，如果IDEA目录结构中没有显示，可以重启IDEA>", "成功");
             } catch (Exception ex) {
                 Messages.showErrorDialog("请检查数据库IP、账号密码和数据是否输入正确", "生成代码失败");
             }
@@ -130,13 +131,13 @@ public class GenerateEntityMain extends AnAction {
      * @return 包配置信息
      */
     private static PackageConfig packageConfig(String projectName) {
-        // 包配
+        // 包配置
         PackageConfig pc = new PackageConfig();
-        String name = projectName.replaceAll("-", ".");
-        pc.setParent("alp.starcode." + name + ".framework.database.mariadb.mybatis");//父包
+        String name = projectName.replaceAll("-", "");
+        pc.setParent("alp.starcode." + name + ".framework.database.mariadb.mybatis");
         pc.setService(SERVICE_PACKAGE);
         pc.setServiceImpl(SERVICE_IMPL_PACKAGE);
-        pc.setMapper(MAPPER_PACKAGE);    // Mapper包名
+        pc.setMapper(MAPPER_PACKAGE);
         pc.setEntity(ENTITY_PACKAGE);
         return pc;
     }
@@ -215,13 +216,23 @@ public class GenerateEntityMain extends AnAction {
         return strategy;
     }
 
-    //= -==== ==不需要修改配======
-    // 启swagger2模式
-    public static final Boolean SWAGGER_ENABLE = true;//是否覆盖已有文件1个用
-    public static final Boolean RECOVER_ENABLE = true;//dao包名1个用
-    public static final String SERVICE_PACKAGE = "dao";
-    public static final String SERVICE_IMPL_PACKAGE = "dao.impl";//mapper包名1个用
-    public static final String MAPPER_PACKAGE = "mapper";//entity包名1个用
-    public static final String ENTITY_PACKAGE = "entity";
+    //----------------------------固定配置------------------------------------------
+    //开启swagger2模式
+    public static final Boolean SWAGGER_ENABLE = true;
 
+    //是否覆盖已有文件
+    public static final Boolean RECOVER_ENABLE = true;
+
+    //dao包名
+    public static final String SERVICE_PACKAGE = "dao";
+
+    //service.impl包名
+    public static final String SERVICE_IMPL_PACKAGE = "dao.impl";
+
+    //mapper包名
+    public static final String MAPPER_PACKAGE = "mapper";
+
+    //entity包名
+    public static final String ENTITY_PACKAGE = "entity";
+    //----------------------------------------------------------------------------
 }
