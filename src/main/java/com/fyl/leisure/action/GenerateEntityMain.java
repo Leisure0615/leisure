@@ -182,7 +182,7 @@ public class GenerateEntityMain extends AnAction {
         gc.setBaseColumnList(true);
         gc.setAuthor(author);
         gc.setServiceName("%sDao");// service 命名方式
-        gc.setServiceImplName("%sDaoImpl");// service impl争名方式
+        gc.setServiceImplName("%sDaoImpl");// service impl命名方式
         gc.setMapperName("%sMapper");
         return gc;
     }
