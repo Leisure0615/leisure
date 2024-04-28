@@ -13,9 +13,16 @@ import com.github.yulichang.base.MPJBaseServiceImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,33 +39,70 @@ public class GenerateEntityMain extends AnAction {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-        //获取当前项目目录
+        //获取当前项目
         Project project = e.getData(PlatformDataKeys.PROJECT);
-        VirtualFile projectDir = project.getBaseDir();
-        if (projectDir == null) {
-            return;
-        }
-        generateMethod();
+        // 创建一个对话框
+        DialogBuilder builder = new DialogBuilder(project);
+        builder.setTitle("请输入MySQL数据库信息和作者信息");
+        JPanel panel = new JPanel(new GridLayout(5, 2));
+
+        // 添加文本框和标签
+        JTextField ipField = new JTextField();
+        JTextField portField = new JTextField();
+        JTextField accountField = new JTextField();
+        JTextField passwordField = new JTextField();
+        JTextField databaseField = new JTextField();
+        JTextField authorField = new JTextField();
+
+        panel.add(new JLabel("Host:"));
+        panel.add(ipField);
+        panel.add(new JLabel("Port:"));
+        panel.add(portField);
+        panel.add(new JLabel("User:"));
+        panel.add(accountField);
+        panel.add(new JLabel("Password:"));
+        panel.add(passwordField);
+        panel.add(new JLabel("Database:"));
+        panel.add(databaseField);
+        panel.add(new JLabel("Author:"));
+        panel.add(authorField);
+
+        builder.setCenterPanel(panel);
+        builder.addOkAction().setText("下一步");
+        builder.setOkOperation(() -> {
+            // 弹出文件目录选择器
+            FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+            descriptor.setTitle("选择目录");
+            descriptor.setDescription("选择要生成方法的src目录");
+            VirtualFile[] chosenFiles = FileChooser.chooseFiles(descriptor, project, null);
+            // 如果用户取消选择目录，则不执行后续操作
+            if (chosenFiles.length == 0) {
+                return;
+            }
+            // 执行 generateMethod() 方法
+            try {
+                generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
+            } catch (Exception ex) {
+                Messages.showErrorDialog("请检查数据库IP、账号密码和数据是否输入正确", "生成代码失败");
+            }
+        });
+        builder.show();
+        Messages.showInfoMessage("生成代码完成", "完成");
     }
 
-    static final String OUT_PATH = System.getProperty("user.dir");
-    static final String MODULE_NAME = "alp-scaffolding framework";
-    static final String DATABASES_PATH = "10.20.32.30:3306";
-    //NOSONAR 仅特例，用于代码生成1个用法static final String DATABASES_NAME = "alp scaffolding db",2 个用
     public static final String USER_NAME = "root";
     public static final String USER_PSW = "123456";
-    //    public static final String DATABASE_URL = "jdbc:mySql://" + DATABASES_PATH + "/" + DATABASES_NAME + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC";
     public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + ":3306" + "/" + "blog" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC&allowPublicKeyRetrieval=true";
     public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
 
-    public static void generateMethod() {
+    public static void generateMethod(String projectName, VirtualFile chosenFile, String ip, String port, String account, String password, String database, String author) {
         AutoGenerator mpg = new AutoGenerator();
         TemplateConfig templateconfig = new TemplateConfig();
         templateconfig.setXml(null).setController(null);
         mpg.setTemplate(templateconfig);
-        mpg.setPackageInfo(packageConfig());//全局配置
-        mpg.setGlobalConfig(globalConfig());//数据源配
-        mpg.setDataSource(dataSource());
+        mpg.setPackageInfo(packageConfig(projectName));//全局配置
+        mpg.setGlobalConfig(globalConfig(chosenFile, author));//数据源配
+        mpg.setDataSource(dataSource(ip, port, account, password, database));
         // 策略配置
         mpg.setStrategy(strategy());
         //解决模板引擎初始化失败的问题
@@ -70,40 +114,40 @@ public class GenerateEntityMain extends AnAction {
 
     }
 
-    private static PackageConfig packageConfig() {
+    private static PackageConfig packageConfig(String projectName) {
         // 包配
         PackageConfig pc = new PackageConfig();
-        pc.setParent(PARENT_PACKAGE);//父包
+        pc.setParent("alp.starcode." + projectName + ".framework.database.mariadb.mybatis");//父包
         pc.setService(SERVICE_PACKAGE);
-        pc.setServiceImpl(SERVICE_IMPL_PACKAGE); // Service In
+        pc.setServiceImpl(SERVICE_IMPL_PACKAGE);
         pc.setMapper(MAPPER_PACKAGE);    // Mapper包名
         pc.setEntity(ENTITY_PACKAGE);
         return pc;
     }
 
-    private static DataSourceConfig dataSource() {
+    private static DataSourceConfig dataSource(String ip, String port, String account, String password, String database) {
         DataSourceConfig dsc = new DataSourceConfig();
         dsc.setDbType(DbType.MYSQL);//mysol生成用DhType.MYSQL
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
-        dsc.setUsername(USER_NAME);
-        dsc.setPassword(USER_PSW);
-        dsc.setUrl(DATABASE_URL);
+        dsc.setUsername(account);
+        dsc.setPassword(password);
+        dsc.setUrl("jdbc:mysql://" + ip + port + "/" + database + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC&allowPublicKeyRetrieval=true");
         return dsc;
     }
 
-    private static GlobalConfig globalConfig() {
+    private static GlobalConfig globalConfig(VirtualFile chosenFile, String author) {
         GlobalConfig gc = new GlobalConfig();
         gc.setIdType(IdType.INPUT);
         gc.setOpen(false);
         gc.setSwagger2(SWAGGER_ENABLE);
-//        gc.set0utputDir(OUT_PATH + "\\" + "MODULE_NAME" + "\\src\\main\\java");    //生成文件存放的位
-        gc.setOutputDir("D:\\ASUS\\桌面\\java");    //生成文件存放的位
+//        gc.setOutputDir("D:\\ASUS\\桌面\\java");    //生成文件存放的位
+        gc.setOutputDir(chosenFile.getPath());    //生成文件存放的位
         gc.setFileOverride(RECOVER_ENABLE);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);
         gc.setBaseResultMap(true);
         gc.setBaseColumnList(true);
-        gc.setAuthor("tangzhipeng");
+        gc.setAuthor(author);
         gc.setServiceName("%sDao");// service 命名方式
         gc.setServiceImplName("%sDaoImpl");// service impl争名方式
         gc.setMapperName("%sMapper");

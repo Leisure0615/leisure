@@ -125,3 +125,6 @@ tasks {
         channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 }
+tasks.withType<JavaCompile> {
+    options.encoding = "utf-8"
+}
