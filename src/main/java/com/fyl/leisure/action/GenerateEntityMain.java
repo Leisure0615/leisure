@@ -86,9 +86,9 @@ public class GenerateEntityMain extends AnAction {
                 generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-                Messages.showInfoMessage("生成代码成功。<注意：代码已生成在文件中，如果IDEA目录结构中没有显示，可以重启IDEA>", "成功");
+                Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以重启IDEA）", "运行成功");
             } catch (Exception ex) {
-                Messages.showErrorDialog("请检查数据库IP、账号密码和数据是否输入正确", "生成代码失败");
+                Messages.showErrorDialog("请检查数据库连接验证信息和数据库名是否输入正确", "生成实体类代码失败");
             }
         });
         builder.show();
