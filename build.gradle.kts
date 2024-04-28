@@ -29,8 +29,10 @@ dependencies {
     implementation("com.github.yulichang:mybatis-plus-join:1.4.6")
     implementation("com.baomidou:mybatis-plus-generator:3.3.2")
     implementation("io.springfox:springfox-swagger2:2.9.2")
-    implementation("org.apache.velocity:velocity-engine-core:2.3")
+    implementation("org.projectlombok:lombok:1.18.20")
     implementation("org.freemarker:freemarker:2.3.30")
+    implementation("velocity-tools:velocity-tools:1.4")
+    implementation("org.apache.velocity:velocity-engine-core:2.3")
     implementation("org.apache.logging.log4j:log4j:2.17.2")
 }
 
