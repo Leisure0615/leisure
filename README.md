@@ -17,11 +17,13 @@
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+This IDEA plugin is a powerful code generation tool designed to help developers quickly generate code for entity classes, DAO layer, service layer, mapper layer, and controller layer. Through this plugin, users can easily generate various types of Java code, eliminating the tedious process of manually writing repetitive code and greatly improving development efficiency.
 
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
+The plugin features a simple and intuitive interface, user-friendly and easy to use. Users only need to set up relevant configurations in specified locations, fill in the corresponding information, and generate the required code with just one click.
 
-To keep everything working, do not remove `<!-- ... -->` sections. 
+In addition to code generation, the plugin also provides functions such as code formatting and code commenting, helping users maintain consistent code style and improve code readability and maintainability.
+
+In summary, this IDEA plugin is an efficient and convenient code generation tool that saves developers a lot of time and effort, making development work easier and more efficient.
 <!-- Plugin description end -->
 
 ## Installation
