@@ -18,6 +18,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -48,7 +49,7 @@ public class GenerateEntityMain extends AnAction {
 
         // 添加文本框和标签
         JTextField ipField = new JTextField();
-        JTextField portField = new JTextField();
+        JTextField portField = new JTextField("3306");
         JTextField accountField = new JTextField();
         JTextField passwordField = new JTextField();
         JTextField databaseField = new JTextField();
@@ -73,7 +74,7 @@ public class GenerateEntityMain extends AnAction {
             // 弹出文件目录选择器
             FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
             descriptor.setTitle("选择目录");
-            descriptor.setDescription("选择要生成方法的src目录");
+            descriptor.setDescription("选择要生成方法的src/main/java目录（选择到Java那层）");
             VirtualFile[] chosenFiles = FileChooser.chooseFiles(descriptor, project, null);
             // 如果用户取消选择目录，则不执行后续操作
             if (chosenFiles.length == 0) {
@@ -82,19 +83,28 @@ public class GenerateEntityMain extends AnAction {
             // 执行 generateMethod() 方法
             try {
                 generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
+                // 成功生成代码，关闭对话框
+                builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+                Messages.showInfoMessage("生成代码成功", "成功");
             } catch (Exception ex) {
                 Messages.showErrorDialog("请检查数据库IP、账号密码和数据是否输入正确", "生成代码失败");
             }
         });
         builder.show();
-        Messages.showInfoMessage("生成代码完成", "完成");
     }
 
-    public static final String USER_NAME = "root";
-    public static final String USER_PSW = "123456";
-    public static final String DATABASE_URL = "jdbc:mysql://" + "localhost" + ":3306" + "/" + "blog" + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC&allowPublicKeyRetrieval=true";
-    public static final String PARENT_PACKAGE = "alp.starcode.alpscaffolding.framework.database.mariadb.mybatis";
-
+    /**
+     * 代码生成方法
+     *
+     * @param projectName 项目名称
+     * @param chosenFile  代码输出目录
+     * @param ip          数据库地址
+     * @param port        端口
+     * @param account     用户
+     * @param password    密码
+     * @param database    数据库名
+     * @param author      作者
+     */
     public static void generateMethod(String projectName, VirtualFile chosenFile, String ip, String port, String account, String password, String database, String author) {
         AutoGenerator mpg = new AutoGenerator();
         TemplateConfig templateconfig = new TemplateConfig();
@@ -111,13 +121,19 @@ public class GenerateEntityMain extends AnAction {
         // 执行生成
         mpg.execute();
         Thread.currentThread().setContextClassLoader(oldContextClassLoader);
-
     }
 
+    /**
+     * 包名配置
+     *
+     * @param projectName 项目名称
+     * @return 包配置信息
+     */
     private static PackageConfig packageConfig(String projectName) {
         // 包配
         PackageConfig pc = new PackageConfig();
-        pc.setParent("alp.starcode." + projectName + ".framework.database.mariadb.mybatis");//父包
+        String name = projectName.replaceAll("-", ".");
+        pc.setParent("alp.starcode." + name + ".framework.database.mariadb.mybatis");//父包
         pc.setService(SERVICE_PACKAGE);
         pc.setServiceImpl(SERVICE_IMPL_PACKAGE);
         pc.setMapper(MAPPER_PACKAGE);    // Mapper包名
@@ -125,23 +141,39 @@ public class GenerateEntityMain extends AnAction {
         return pc;
     }
 
+    /**
+     * 数据源配置
+     *
+     * @param ip       数据库地址
+     * @param port     端口
+     * @param account  用户
+     * @param password 密码
+     * @param database 数据库名
+     * @return 数据源信息
+     */
     private static DataSourceConfig dataSource(String ip, String port, String account, String password, String database) {
         DataSourceConfig dsc = new DataSourceConfig();
         dsc.setDbType(DbType.MYSQL);//mysol生成用DhType.MYSQL
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
         dsc.setUsername(account);
         dsc.setPassword(password);
-        dsc.setUrl("jdbc:mysql://" + ip + port + "/" + database + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC&allowPublicKeyRetrieval=true");
+        dsc.setUrl("jdbc:mysql://" + ip + ":" + port + "/" + database + "?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimeZone=UTC&allowPublicKeyRetrieval=true");
         return dsc;
     }
 
+    /**
+     * 全局配置
+     *
+     * @param chosenFile 代码输出目录
+     * @param author     作者
+     * @return 全局配置
+     */
     private static GlobalConfig globalConfig(VirtualFile chosenFile, String author) {
         GlobalConfig gc = new GlobalConfig();
         gc.setIdType(IdType.INPUT);
         gc.setOpen(false);
         gc.setSwagger2(SWAGGER_ENABLE);
-//        gc.setOutputDir("D:\\ASUS\\桌面\\java");    //生成文件存放的位
-        gc.setOutputDir(chosenFile.getPath());    //生成文件存放的位
+        gc.setOutputDir(chosenFile.getPath());    //生成文件存放的位位置
         gc.setFileOverride(RECOVER_ENABLE);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);
@@ -154,19 +186,24 @@ public class GenerateEntityMain extends AnAction {
         return gc;
     }
 
+    /**
+     * 配置策略
+     *
+     * @return 策略
+     */
     private static StrategyConfig strategy() {
         StrategyConfig strategy = new StrategyConfig();
-        strategy.setLogicDeleteFieldName("delete_fiag");
+        strategy.setLogicDeleteFieldName("delete_flag");
         strategy.setTablePrefix(""); // 去掉表名前缓
         strategy.setNaming(NamingStrategy.underline_to_camel);//表名生成策略(underline_to_camel,下划线转驼峰命名)
         strategy.setExclude("interface_info");
         strategy.setColumnNaming(NamingStrategy.underline_to_camel);
-        strategy.setSuperControllerClass("nlo.ssarpode aase,framemark.base.BaseController");//自定义继承的Controller类全
+        strategy.setSuperControllerClass("alp.starcode.mcsu.framework.base.BaseController");//自定义继承的Controller类全
         strategy.setEntityLombokModel(true);
         strategy.setSuperMapperClass("com.github.yuichang.base.MPJBaseMapper");
         strategy.setSuperServiceClass(MPJBaseService.class);
         strategy.setSuperServiceImplClass(MPJBaseServiceImpl.class);
-        strategy.setChainModel(true);
+        strategy.setChainModel(true);//生成build代码
         List<TableFill> tableFills = new ArrayList<>();
         tableFills.add(new TableFill("create_user_id", FieldFill.INSERT));
         tableFills.add(new TableFill("create_user_name", FieldFill.INSERT));
