@@ -14,39 +14,39 @@ public class FiledVO {
     /**
      * 字段名称
      */
-    private String filedName;
+    private String fieldName;
 
     /**
      * 字段数据类型
      */
-    private String filedType;
+    private String fieldType;
 
     /**
      * 字段注释
      */
-    private NodeList<AnnotationExpr> filedAnnotation;
+    private NodeList<AnnotationExpr> fieldAnnotation;
 
-    public String getFiledName() {
-        return this.filedName;
+    public String getFieldName() {
+        return this.fieldName;
     }
 
-    public void setFiledName(String filedName) {
-        this.filedName = filedName;
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
     }
 
-    public String getFiledType() {
-        return this.filedType;
+    public String getFieldType() {
+        return this.fieldType;
     }
 
-    public void setFiledType(String filedType) {
-        this.filedType = filedType;
+    public void setFieldType(String fieldType) {
+        this.fieldType = fieldType;
     }
 
-    public NodeList<AnnotationExpr> getFiledAnnotation() {
-        return this.filedAnnotation;
+    public NodeList<AnnotationExpr> getFieldAnnotation() {
+        return this.fieldAnnotation;
     }
 
-    public void setFiledAnnotation(NodeList<AnnotationExpr> filedAnnotation) {
-        this.filedAnnotation = filedAnnotation;
+    public void setFieldAnnotation(NodeList<AnnotationExpr> fieldAnnotation) {
+        this.fieldAnnotation = fieldAnnotation;
     }
 }
