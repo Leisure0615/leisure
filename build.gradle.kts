@@ -24,7 +24,7 @@ repositories {
 dependencies {
 //    implementation(libs.annotations)
     implementation("com.github.javaparser:javaparser-core:3.25.10")
-    implementation("mysql:mysql-connector-java:8.0.27")
+    implementation("mysql:mysql-connector-java:8.0.33")
     implementation("com.baomidou:mybatis-plus-boot-starter:3.5.2")
     implementation("com.github.yulichang:mybatis-plus-join:1.4.6")
     implementation("com.baomidou:mybatis-plus-generator:3.3.2")
