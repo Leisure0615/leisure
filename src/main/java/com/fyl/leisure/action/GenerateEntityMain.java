@@ -210,7 +210,7 @@ public class GenerateEntityMain extends AnAction {
         strategy.setColumnNaming(NamingStrategy.underline_to_camel);
         strategy.setSuperControllerClass("alp.starcode.mcsu.framework.base.BaseController");//自定义继承的Controller类全
         strategy.setEntityLombokModel(true);
-        strategy.setSuperMapperClass("com.github.yuichang.base.MPJBaseMapper");
+        strategy.setSuperMapperClass("com.github.yulichang.base.MPJBaseMapper");
         strategy.setSuperServiceClass(MPJBaseService.class);
         strategy.setSuperServiceImplClass(MPJBaseServiceImpl.class);
         strategy.setChainModel(true);//生成build代码
