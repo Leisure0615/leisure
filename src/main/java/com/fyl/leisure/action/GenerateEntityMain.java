@@ -10,9 +10,11 @@ import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.github.yulichang.base.MPJBaseService;
 import com.github.yulichang.base.MPJBaseServiceImpl;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -87,6 +89,13 @@ public class GenerateEntityMain extends AnAction {
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
                 Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以重启IDEA）", "运行成功");
+                // 刷新侧边栏目录
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                    ProjectView projectView = ProjectView.getInstance(project);
+                    if (projectView != null) {
+                        projectView.refresh();
+                    }
+                });
             } catch (Exception ex) {
                 Messages.showErrorDialog("请检查数据库连接验证信息和数据库名是否输入正确", "生成实体类代码失败");
             }
