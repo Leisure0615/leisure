@@ -88,7 +88,7 @@ public class GenerateEntityMain extends AnAction {
                 generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-                Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以重启IDEA）", "运行成功");
+                Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以尝试右击文件夹再点击从磁盘重新加载或重启IDEA）", "运行成功");
                 // 刷新侧边栏目录
                 ApplicationManager.getApplication().runWriteAction(() -> {
                     ProjectView projectView = ProjectView.getInstance(project);
