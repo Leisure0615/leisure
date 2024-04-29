@@ -112,9 +112,9 @@ public class GenerateOperationFiles extends AnAction {
                     //生成DTO与VO
                     FilePathVO filePathVO = createModel(virtualFile, finalFiledVOS, finalClassName, configuration, out);
                     //生成Service
-                    createService(virtualFile, finalClassName, configuration, out, filePathVO, clickedFile);
+                    String servicePath = createService(virtualFile, finalClassName, configuration, out, filePathVO, clickedFile);
                     //生成Controller
-                    createController(virtualFile, finalFiledVOS, finalClassName, configuration, out);
+                    createController(virtualFile, finalClassName, configuration, out, filePathVO, clickedFile,servicePath);
 
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
@@ -129,24 +129,38 @@ public class GenerateOperationFiles extends AnAction {
      * 生成controller文件夹夹以及controller文件
      *
      * @param parentDirectory
-     * @param filedVOS
      * @param finalClassName
+     * @param filePathVO
+     * @param clickedFile
+     * @param servicePath
      * @throws IOException
      * @throws TemplateException
      */
-    private static void createController(VirtualFile parentDirectory, List<FiledVO> filedVOS, String finalClassName, Configuration configuration, Writer out) throws IOException, TemplateException {
+    private static void createController(VirtualFile parentDirectory, String finalClassName, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile clickedFile, String servicePath) throws IOException, TemplateException {
         VirtualFile controller = parentDirectory.createChildDirectory(null, "controller");
-        // 检查字符串是否为空或长度小于1
-        if (finalClassName != null && finalClassName.length() > 0) {
-            // 将首字母转换为小写
-            char firstCharLower = Character.toLowerCase(finalClassName.charAt(0));
-            String remainingString = finalClassName.substring(1);
-            // 组合新的字符串
-            String classObject = firstCharLower + remainingString;
-        } else {
-            System.out.println("字符串为空或长度不足");
-        }
-
+        // 将类名字首字母转换为小写
+        char firstCharLower = Character.toLowerCase(finalClassName.charAt(0));
+        String remainingString = finalClassName.substring(1);
+        //根据点击的实体类中找到Dao包的路径
+        VirtualFile daoPathByEntity = findDaoPathByEntity(clickedFile, finalClassName);
+        // 组合新的字符串
+        String classObject = firstCharLower + remainingString;
+        Map<String, Object> dataMap = new HashMap<String, Object>();
+        dataMap.put("package", convertPathToPackageName(controller.getPath()));
+        dataMap.put("entityImport", convertPathToPackageName(clickedFile.getPath()));
+        dataMap.put("dtoImport", filePathVO.getDtoPath());
+        dataMap.put("voImport", filePathVO.getVoPath());
+        dataMap.put("serviceImport", servicePath);
+        dataMap.put("className", finalClassName);
+        dataMap.put("classObject", classObject);
+        dataMap.put("date", currentTime());
+        // step4 加载模版文件
+        Template template = configuration.getTemplate("Controller.ftl");
+        // step5 生成数据
+        File docFile = new File(controller.getPath() + "\\" + finalClassName + "Controller.java");
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
+        // step6 输出文件
+        template.process(dataMap, out);
     }
 
     /**
@@ -157,11 +171,12 @@ public class GenerateOperationFiles extends AnAction {
      * @param filePathVO      路径对象，包括dto路径，dao路径，vo路径
      * @param clickedFile     实体类路径对象
      * @param configuration   模板设置对象
+     * @return
      * @throws IOException
      */
-    private static void createService(VirtualFile parentDirectory, String finalClassName, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile clickedFile) throws IOException, TemplateException {
+    private static String createService(VirtualFile parentDirectory, String finalClassName, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile clickedFile) throws IOException, TemplateException {
         VirtualFile service = parentDirectory.createChildDirectory(null, "service");
-        // 将首字母转换为小写
+        // 将类名字首字母转换为小写
         char firstCharLower = Character.toLowerCase(finalClassName.charAt(0));
         String remainingString = finalClassName.substring(1);
         //根据点击的实体类中找到Dao包的路径
@@ -184,7 +199,8 @@ public class GenerateOperationFiles extends AnAction {
         out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
         // step6 输出文件
         template.process(dataMap, out);
-        System.out.println("DTO文件创建成功 !");
+        //返回Service文件路径
+        return convertPathToPackageName(docFile.toString());
     }
 
     /**
@@ -230,6 +246,7 @@ public class GenerateOperationFiles extends AnAction {
         // step6 输出文件
         template.process(dataMap, out);
         System.out.println("VO路径   " + docFile);
+        //返回VO文件路径
         return convertPathToPackageName(docFile.toString());
     }
 
@@ -258,7 +275,7 @@ public class GenerateOperationFiles extends AnAction {
         out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
         // step6 输出文件
         template.process(dataMap, out);
-        System.out.println("DTO路径   " + docFile);
+        //返回DTO文件路径
         return convertPathToPackageName(docFile.toString());
     }
 
