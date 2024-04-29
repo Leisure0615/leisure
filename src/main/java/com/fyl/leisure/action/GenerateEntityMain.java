@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class GenerateEntityMain extends AnAction {
     public GenerateEntityMain() {
-        super("GenerateEntityMain");
+        super("构建entity、mapper代码");
     }
 
     @Override

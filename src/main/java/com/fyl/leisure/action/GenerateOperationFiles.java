@@ -40,7 +40,7 @@ public class GenerateOperationFiles extends AnAction {
 
     public GenerateOperationFiles() {
 
-        super("GenerateOperationFiles");
+        super("构建业务代码");
     }
 
     @Override
@@ -108,6 +108,7 @@ public class GenerateOperationFiles extends AnAction {
                 try {
                     Configuration configuration = new Configuration();
                     configuration.setClassForTemplateLoading(getClass(), "/templates");
+                    configuration.setDefaultEncoding("UTF-8");
                     Writer out = null;
                     //生成DTO与VO
                     FilePathVO filePathVO = createModel(virtualFile, finalFiledVOS, finalClassName, configuration, out);
@@ -158,7 +159,7 @@ public class GenerateOperationFiles extends AnAction {
         Template template = configuration.getTemplate("Controller.ftl");
         // step5 生成数据
         File docFile = new File(controller.getPath() + "\\" + finalClassName + "Controller.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
     }
@@ -196,7 +197,7 @@ public class GenerateOperationFiles extends AnAction {
         Template template = configuration.getTemplate("Service.ftl");
         // step5 生成数据
         File docFile = new File(service.getPath() + "\\" + finalClassName + "Service.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回Service文件路径
@@ -242,7 +243,7 @@ public class GenerateOperationFiles extends AnAction {
         Template template = configuration.getTemplate("VO.ftl");
         // step5 生成数据
         File docFile = new File(vo.getPath() + "\\" + finalClassName + "VO.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         System.out.println("VO路径   " + docFile);
@@ -272,7 +273,7 @@ public class GenerateOperationFiles extends AnAction {
         Template template = configuration.getTemplate("DTO.ftl");
         // step5 生成数据
         File docFile = new File(dto.getPath() + "\\" + finalClassName + "DTO.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile)));
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回DTO文件路径
