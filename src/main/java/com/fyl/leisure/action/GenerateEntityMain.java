@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.github.yulichang.base.MPJBaseService;
 import com.github.yulichang.base.MPJBaseServiceImpl;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -65,7 +67,8 @@ public class GenerateEntityMain extends AnAction {
         JTextField accountField = new JTextField(lastUser);
         JTextField passwordField = new JTextField(lastPassword);
         JTextField databaseField = new JTextField(lastDatabase);
-        JTextField authorField = new JTextField(lastAuthor);
+        String userName = System.getProperty("user.name");
+        JTextField authorField = new JTextField("".equals(lastAuthor) ? userName : lastAuthor);
 
         panel.add(new JLabel("Host:"));
         panel.add(ipField);
@@ -117,6 +120,19 @@ public class GenerateEntityMain extends AnAction {
             }
         });
         builder.show();
+    }
+
+    /**
+     * 解析模板获取author
+     *
+     * @param header 注释
+     * @return author
+     */
+    private static String parseAuthorFromHeader(String header) {
+        // 此处使用简单的字符串处理方法，你可以根据具体情况使用正则表达式等更复杂的方法来解析
+        int startIndex = header.indexOf("@author") + 7;
+        int endIndex = header.indexOf("\n", startIndex);
+        return header.substring(startIndex, endIndex).trim();
     }
 
     /**
