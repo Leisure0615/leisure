@@ -5,7 +5,6 @@ import ${voImport};
 import ${daoImport};
 import ${entityImport};
 import alp.starcode.common.mybatis.page.Pagination;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +36,7 @@ public class ${className}Service {
     */
     public Pagination<${className}VO> page${className}(Pagination<${className}VO> page, String searchKey){
         MPJLambdaWrapper<${className}> wrapper = new MPJLambdaWrapper<>();
-        // 查询条件
-        setQuery(wrapper, searchKey);
-        //连表条件
-        joinDto(wrapper);
+
         return ${classObject}Dao.selectJoinListPage(page, ${className}VO.class, wrapper);
     }
 
@@ -50,35 +46,17 @@ public class ${className}Service {
     */
     public List<${className}VO> list${className}(String searchKey){
          MPJLambdaWrapper<${className}> wrapper = new MPJLambdaWrapper<>();
-         // 查询条件
-         setQuery(wrapper, searchKey);
-         //连表条件
-         joinDto(wrapper);
+
          return ${classObject}Dao.selectJoinList(${className}VO.class, wrapper);
     }
 
     /**
-    * 查询条件放置
-    */
-    private void setQuery(MPJLambdaWrapper<${className}> wrapper, String searchKey){
-        //查询条件
-    }
-
-    /**
-    * 连表条件放置
-    */
-    private void joinDto(MPJLambdaWrapper<${className}> wrapper){
-         //连表查询条件
-         //wrapper.leftJoin()
-    }
-
-    /**
     * 根据Id查询
-    * @param ${classObject}Id
+    * @param ${idField}
     */
     @Transactional(rollbackFor = Exception.class)
-    public ${className} get${className} (String ${classObject}Id) {
-        return ${classObject}Dao.getById(${classObject}Id);
+    public ${className} get${className} (String ${idField}) {
+        return ${classObject}Dao.getById(${idField});
     }
 
     /**
@@ -89,7 +67,7 @@ public class ${className}Service {
     public void add${className}(${className}DTO ${classObject}DTO) {
         ${className} ${classObject} = new ${className}();
         BeanUtils.copyProperties(${classObject}DTO,${classObject});
-        ${classObject}.set${className}Id(UUID.randomUUID().toString());
+        ${classObject}.set${IdField}(UUID.randomUUID().toString());
         ${classObject}Dao.saveOrUpdate(${classObject});
     }
 
@@ -105,13 +83,11 @@ public class ${className}Service {
     }
 
     /**
-    * 逻辑删除
-    * @param ${classObject}Id
+    * 删除方法
+    * @param ${idField}
     */
     @Transactional(rollbackFor = Exception.class)
-    public void delete${className}(String ${classObject}Id) {
-        ${classObject}Dao.update(new LambdaUpdateWrapper<${className}>()
-                .set(${className}::getDeleteTime,System.currentTimeMillis())
-                .eq(${className}::get${className}Id,${classObject}Id));
+    public void delete${className}(String ${idField}) {
+        ${classObject}Dao.removeById(${idField});
     }
 }

@@ -8,14 +8,19 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -45,121 +50,159 @@ public class GenerateOperationFiles extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        //获取当前项目目录
         Project project = e.getData(PlatformDataKeys.PROJECT);
         VirtualFile projectDir = project.getBaseDir();
         if (projectDir == null) {
             return;
         }
-        List<FiledVO> filedVOS = new ArrayList<>();
-        Object data = e.getDataContext().getData("virtualFile");
+        //第一步  获取鼠标右键点击的目录
+        VirtualFile chooseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
+        if (chooseDir == null || !chooseDir.isDirectory()) {
+            Messages.showMessageDialog("请选择目录", "提示", Messages.getWarningIcon());
+            return;
+        }
+        //构建目录 默认打开entity目录
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+        VirtualFile entity = findEntityDir(project, projectDir, "entity");
+        //获取选中的实体类文件
+        VirtualFile entityFile = FileChooser.chooseFile(descriptor, project, entity);
+        //todo 判断当前选择类不是实体类     选择的不是类型则不执行后续代码
+        if (entityFile == null) {
+            Messages.showMessageDialog("请选择一个实体类", "提示", Messages.getWarningIcon());
+            return;
+        }
         //获取实体类名字，去掉.java后缀
         String className = null;
-        VirtualFile clickedFile;
-        if (data instanceof VirtualFile) {
-            clickedFile = (VirtualFile) data;
-            // 使用lastIndexOf找到最后一个"."的位置
-            int dotIndex = clickedFile.getName().lastIndexOf('.');
-            // 使用substring获取没有扩展名的文件名
-            if (dotIndex != -1) {
-                className = clickedFile.getName().substring(0, dotIndex);
-            } else {
-                // 如果没有找到"."，说明文件名没有扩展名
-                className = clickedFile.getName();
-            }
-            //获取实体类字段信息
-            if (clickedFile.isValid()) {
-                try (FileInputStream fileInputStream = new FileInputStream(clickedFile.getPath())) {
-                    ParseResult<CompilationUnit> result = new JavaParser().parse(fileInputStream);
-                    CompilationUnit compilationUnit = result.getResult().orElse(null);
-                    ClassOrInterfaceDeclaration targetClass = compilationUnit.getClassByName(className).orElse(null);
-                    if (targetClass != null) {
-                        for (FieldDeclaration field : targetClass.getFields()) {
-                            FiledVO filedVO = new FiledVO();
-                            filedVO.setFieldName(field.getVariables().get(0).getName().asString());
-                            filedVO.setFieldType(field.getVariables().get(0).getType().toString());
-                            filedVO.setFieldAnnotation(field.getAnnotations());
-                            filedVOS.add(filedVO);
-                        }
-                    }
-                    //去掉不需要的字段
-                    Set<String> fieldsToRemove = new HashSet<>(Arrays.asList("deleteTime", "createUserId", "createUserName", "createTime",
-                            "updateTime", "updateUserName", "updateUserId"));
-                    filedVOS = filedVOS.stream()
-                            .filter(filedVO -> !fieldsToRemove.contains(filedVO.getFieldName()))
-                            .collect(Collectors.toList());
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
+        int dotIndex = entityFile.getName().lastIndexOf('.');
+        if (dotIndex != -1) {
+            className = entityFile.getName().substring(0, dotIndex);
         } else {
-            clickedFile = null;
+            className = entityFile.getName();
         }
-        //构建目录
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-        //获取选中的目录
-        VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, projectDir);
-        if (virtualFile != null && virtualFile.isDirectory()) {
-            //生成文件
-            Application applicationManager = ApplicationManager.getApplication();
-            List<FiledVO> finalFiledVOS = filedVOS;
-            String finalClassName = className;
-            applicationManager.runWriteAction(() -> {
-                try {
-                    Configuration configuration = new Configuration();
-                    configuration.setClassForTemplateLoading(getClass(), "/templates");
-                    configuration.setDefaultEncoding("UTF-8");
-                    Writer out = null;
-                    //生成DTO与VO
-                    FilePathVO filePathVO = createModel(virtualFile, finalFiledVOS, finalClassName, configuration, out);
-                    //生成Service
-                    String servicePath = createService(virtualFile, finalClassName, configuration, out, filePathVO, clickedFile);
-                    //生成Controller
-                    createController(virtualFile, finalClassName, configuration, out, filePathVO, clickedFile,servicePath);
+        //获取实体类字段信息
+        List<FiledVO> filedVOS = new ArrayList<>();
+        filedVOS = getFiledsByEntity(entityFile, className, filedVOS);
+        //筛选出Id与逻辑删除字段
+        String idField = getIdField(filedVOS);
+        if(idField == null){
+            Messages.showMessageDialog("请给Id加上 @TableId 注解", "提示", Messages.getWarningIcon());
+            return;
+        }
+        //在当前鼠标右键选择的目录生成文件
+        generateDir(filedVOS, className, chooseDir, entityFile, idField);
+    }
 
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
+    private static String getIdField(List<FiledVO> filedVOS) {
+        Optional<String> fieldNameOptional = filedVOS.stream()
+                .flatMap(filedVO -> filedVO.getFieldAnnotation().stream()
+                        .filter(annotationExpr -> annotationExpr.getName().asString().equals("TableId"))
+                        .map(annotationExpr -> filedVO.getFieldName())) // 获取字段名并映射为流
+                .findFirst(); // 找到第一个满足条件的字段名
+
+        // 如果找到包含 @TableId 注解的字段，则返回字段名，否则返回 null
+        return fieldNameOptional.orElse(null);
+    }
+
+    /**
+     * 在当前鼠标右键选择的目录生成文件
+     *
+     * @param filedVOS   字段集合
+     * @param className  实体类名字
+     * @param chooseDir  选择目录
+     * @param entityFile 实体类文件
+     * @param idField    ID字段
+     */
+    private void generateDir(List<FiledVO> filedVOS, String className, VirtualFile chooseDir, VirtualFile entityFile, String idField) {
+        Application applicationManager = ApplicationManager.getApplication();
+        applicationManager.runWriteAction(() -> {
+            try {
+                Configuration configuration = new Configuration();
+                configuration.setClassForTemplateLoading(getClass(), "/templates");
+                configuration.setDefaultEncoding("UTF-8");
+                Writer out = null;
+                //生成DTO与VO
+                FilePathVO filePathVO = createModel(chooseDir, filedVOS, className, configuration, out);
+                //生成Service
+                String servicePath = createService(chooseDir, className, configuration, out, filePathVO, entityFile, idField);
+                //生成Controller
+                createController(chooseDir, className, configuration, out, filePathVO, entityFile, servicePath, idField);
+
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+    }
+
+    /**
+     * 根据实体类获取字段信息
+     *
+     * @param entityFile 实体类文件
+     * @param className  实体类名字
+     * @param filedVOS   字段空列表
+     * @return List<FiledVO> 实体类字段集合
+     */
+    private static List<FiledVO> getFiledsByEntity(VirtualFile entityFile, String className, List<FiledVO> filedVOS) {
+        if (entityFile.isValid()) {
+            try (FileInputStream fileInputStream = new FileInputStream(entityFile.getPath())) {
+                ParseResult<CompilationUnit> result = new JavaParser().parse(fileInputStream);
+                CompilationUnit compilationUnit = result.getResult().orElse(null);
+                ClassOrInterfaceDeclaration targetClass = compilationUnit.getClassByName(className).orElse(null);
+                if (targetClass != null) {
+                    for (FieldDeclaration field : targetClass.getFields()) {
+                        FiledVO filedVO = new FiledVO();
+                        filedVO.setFieldName(field.getVariables().get(0).getName().asString());
+                        filedVO.setFieldType(field.getVariables().get(0).getType().toString());
+                        filedVO.setFieldAnnotation(field.getAnnotations());
+                        filedVOS.add(filedVO);
+                    }
                 }
-            });
-        } else {
-            System.out.println("没找到该目录");
+                //去掉不需要的字段
+                Set<String> fieldsToRemove = new HashSet<>(Arrays.asList("deleteTime", "createUserId", "createUserName", "createTime",
+                        "updateTime", "updateUserName", "updateUserId"));
+                filedVOS = filedVOS.stream()
+                        .filter(filedVO -> !fieldsToRemove.contains(filedVO.getFieldName()))
+                        .collect(Collectors.toList());
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
+        return filedVOS;
     }
 
     /**
      * 生成controller文件夹夹以及controller文件
      *
-     * @param parentDirectory
-     * @param finalClassName
-     * @param filePathVO
-     * @param clickedFile
-     * @param servicePath
-     * @throws IOException
-     * @throws TemplateException
+     * @param chooseDir   选择目录
+     * @param className   实体类名字
+     * @param filePathVO  包路径对象
+     * @param entityFile  实体类对象
+     * @param servicePath Service路径
+     * @param idField
      */
-    private static void createController(VirtualFile parentDirectory, String finalClassName, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile clickedFile, String servicePath) throws IOException, TemplateException {
-        VirtualFile controller = parentDirectory.createChildDirectory(null, "controller");
+    private static void createController(VirtualFile chooseDir, String className, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile entityFile, String servicePath, String idField) throws IOException, TemplateException {
+        VirtualFile controller = chooseDir.createChildDirectory(null, "controller");
         // 将类名字首字母转换为小写
-        char firstCharLower = Character.toLowerCase(finalClassName.charAt(0));
-        String remainingString = finalClassName.substring(1);
+        char firstCharLower = Character.toLowerCase(className.charAt(0));
+        String remainingString = className.substring(1);
         //根据点击的实体类中找到Dao包的路径
-        VirtualFile daoPathByEntity = findDaoPathByEntity(clickedFile, finalClassName);
+        VirtualFile daoPathByEntity = findDaoPathByEntity(entityFile, className);
         // 组合新的字符串
         String classObject = firstCharLower + remainingString;
         Map<String, Object> dataMap = new HashMap<String, Object>();
         dataMap.put("package", convertPathToPackageName(controller.getPath()));
-        dataMap.put("entityImport", convertPathToPackageName(clickedFile.getPath()));
+        dataMap.put("entityImport", convertPathToPackageName(entityFile.getPath()));
         dataMap.put("dtoImport", filePathVO.getDtoPath());
         dataMap.put("voImport", filePathVO.getVoPath());
         dataMap.put("serviceImport", servicePath);
-        dataMap.put("className", finalClassName);
+        dataMap.put("className", className);
         dataMap.put("classObject", classObject);
         dataMap.put("date", currentTime());
+        dataMap.put("idField", idField);
         // step4 加载模版文件
         Template template = configuration.getTemplate("Controller.ftl");
         // step5 生成数据
-        File docFile = new File(controller.getPath() + "\\" + finalClassName + "Controller.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
+        File docFile = new File(controller.getPath() + "\\" + className + "Controller.java");
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
     }
@@ -167,37 +210,44 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 生成service文件夹以及Service文件
      *
-     * @param parentDirectory 选择的目录
-     * @param finalClassName  实体类名字
-     * @param filePathVO      路径对象，包括dto路径，dao路径，vo路径
-     * @param clickedFile     实体类路径对象
-     * @param configuration   模板设置对象
+     * @param chooseDir     选择的目录
+     * @param className     实体类名字
+     * @param configuration 模板设置对象
+     * @param filePathVO    路径对象，包括dto路径，dao路径，vo路径
+     * @param entityFile    实体类路径对象
+     * @param idField
      * @return
      * @throws IOException
      */
-    private static String createService(VirtualFile parentDirectory, String finalClassName, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile clickedFile) throws IOException, TemplateException {
-        VirtualFile service = parentDirectory.createChildDirectory(null, "service");
+    private static String createService(VirtualFile chooseDir, String className, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile entityFile, String idField) throws IOException, TemplateException {
+        VirtualFile service = chooseDir.createChildDirectory(null, "service");
         // 将类名字首字母转换为小写
-        char firstCharLower = Character.toLowerCase(finalClassName.charAt(0));
-        String remainingString = finalClassName.substring(1);
-        //根据点击的实体类中找到Dao包的路径
-        VirtualFile daoPathByEntity = findDaoPathByEntity(clickedFile, finalClassName);
-        // 组合新的字符串
+        char firstCharLower = Character.toLowerCase(className.charAt(0));
+        String remainingString = className.substring(1);
         String classObject = firstCharLower + remainingString;
+        //将Id字段首字母转化为大写
+        char firstCharUpperCase = Character.toUpperCase(idField.charAt(0));
+        String remainingStringId = idField.substring(1);
+        String IdField = firstCharUpperCase + remainingStringId;
+        //根据点击的实体类中找到Dao包的路径
+        VirtualFile daoPathByEntity = findDaoPathByEntity(entityFile, className);
+        // 组合新的字符串
         Map<String, Object> dataMap = new HashMap<String, Object>();
         dataMap.put("package", convertPathToPackageName(service.getPath()));
-        dataMap.put("entityImport", convertPathToPackageName(clickedFile.getPath()));
+        dataMap.put("entityImport", convertPathToPackageName(entityFile.getPath()));
         dataMap.put("daoImport", convertPathToPackageName(daoPathByEntity.getPath()));
         dataMap.put("dtoImport", filePathVO.getDtoPath());
         dataMap.put("voImport", filePathVO.getVoPath());
-        dataMap.put("className", finalClassName);
+        dataMap.put("className", className);
         dataMap.put("classObject", classObject);
         dataMap.put("date", currentTime());
+        dataMap.put("idField", idField);
+        dataMap.put("IdField", IdField);
         // step4 加载模版文件
         Template template = configuration.getTemplate("Service.ftl");
         // step5 生成数据
-        File docFile = new File(service.getPath() + "\\" + finalClassName + "Service.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
+        File docFile = new File(service.getPath() + "\\" + className + "Service.java");
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回Service文件路径
@@ -207,15 +257,15 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 生成model文件夹
      *
-     * @param parentDirectory 选择目录
-     * @param filedVOS        字段集合
-     * @param finalClassName  实体类名字
-     * @param configuration   模板设置对象
+     * @param chooseDir      选择目录
+     * @param filedVOS       字段集合
+     * @param finalClassName 实体类名字
+     * @param configuration  模板设置对象
      * @throws IOException
      * @throws TemplateException
      */
-    private static FilePathVO createModel(VirtualFile parentDirectory, List<FiledVO> filedVOS, String finalClassName, Configuration configuration, Writer out) throws IOException, TemplateException {
-        VirtualFile model = parentDirectory.createChildDirectory(null, "model");
+    private static FilePathVO createModel(VirtualFile chooseDir, List<FiledVO> filedVOS, String finalClassName, Configuration configuration, Writer out) throws IOException, TemplateException {
+        VirtualFile model = chooseDir.createChildDirectory(null, "model");
         FilePathVO filePathVO = new FilePathVO();
         filePathVO.setDtoPath(creatDTO(filedVOS, model, finalClassName, configuration, out));
         filePathVO.setVoPath(creatVO(filedVOS, model, finalClassName, configuration, out));
@@ -243,7 +293,7 @@ public class GenerateOperationFiles extends AnAction {
         Template template = configuration.getTemplate("VO.ftl");
         // step5 生成数据
         File docFile = new File(vo.getPath() + "\\" + finalClassName + "VO.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         System.out.println("VO路径   " + docFile);
@@ -273,7 +323,7 @@ public class GenerateOperationFiles extends AnAction {
         Template template = configuration.getTemplate("DTO.ftl");
         // step5 生成数据
         File docFile = new File(dto.getPath() + "\\" + finalClassName + "DTO.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile),"UTF-8"));
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回DTO文件路径
@@ -330,6 +380,30 @@ public class GenerateOperationFiles extends AnAction {
                         }
                     }
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 查找当前项目entity目录
+     *
+     * @param project
+     * @param projectDir
+     * @param entity
+     * @return
+     */
+    public static VirtualFile findEntityDir(Project project, VirtualFile projectDir, String entity) {
+        // 检查当前目录是否是目标目录
+        if (projectDir != null && projectDir.isDirectory() && projectDir.getName().equals("entity")) {
+            return projectDir;
+        }
+        VirtualFile[] children = projectDir.getChildren();
+        for (VirtualFile child : children) {
+            // 递归查找子目录
+            VirtualFile found = findEntityDir(project, child, "entity");
+            if (found != null) {
+                return found; // 如果找到目标目录，立即返回
             }
         }
         return null;

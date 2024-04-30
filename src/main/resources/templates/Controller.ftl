@@ -56,10 +56,10 @@ public class ${className}Controller {
     @GetMapping("get${className}.do")
     @ApiOperation("根据Id查询${className}")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "${classObject}Id", name = "${className}流水号", dataType = "string", paramType = "query", required = true)
+        @ApiImplicitParam(value = "${idField}", name = "${className}流水号", dataType = "string", paramType = "query", required = true)
     })
-    public Result<${className}> get${className}(String ${classObject}Id){
-        return Result.success(${classObject}Service.get${className}(${classObject}Id));
+    public Result<${className}> get${className}(String ${idField}){
+        return Result.success(${classObject}Service.get${className}(${idField}));
     }
 
     @PostMapping("add${className}.do")
@@ -79,10 +79,10 @@ public class ${className}Controller {
     @PostMapping("delete${className}.do")
     @ApiOperation("删除${className}")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "${classObject}Id", name = "${className}流水号", dataType = "string", paramType = "query", required = true)
+        @ApiImplicitParam(value = "${idField}", name = "${className}流水号", dataType = "string", paramType = "query", required = true)
     })
-    public Result<Object> delete${className}(String ${classObject}Id){
-         ${classObject}Service.delete${className}(${classObject}Id);
+    public Result<Object> delete${className}(String ${idField}){
+         ${classObject}Service.delete${className}(${idField});
          return Result.success();
      }
 }
