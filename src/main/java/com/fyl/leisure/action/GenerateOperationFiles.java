@@ -42,11 +42,12 @@ import java.util.stream.Collectors;
  */
 public class GenerateOperationFiles extends AnAction {
 
-
     public GenerateOperationFiles() {
 
         super("构建业务代码");
     }
+
+    private final static String parentDirName="mariadb";
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -63,9 +64,10 @@ public class GenerateOperationFiles extends AnAction {
         }
         //构建目录 默认打开entity目录
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
-        VirtualFile entity = findEntityDir(project, projectDir, "entity");
+        VirtualFile entity = findEntityDir(projectDir);
+        descriptor.setRoots(entity);
         //获取选中的实体类文件
-        VirtualFile entityFile = FileChooser.chooseFile(descriptor, project, entity);
+        VirtualFile entityFile = FileChooser.chooseFile(descriptor, null,project, null);
         //todo 判断当前选择类不是实体类     选择的不是类型则不执行后续代码
         if (entityFile == null) {
             Messages.showMessageDialog("请选择一个实体类", "提示", Messages.getWarningIcon());
@@ -393,7 +395,7 @@ public class GenerateOperationFiles extends AnAction {
      * @param entity
      * @return
      */
-    public static VirtualFile findEntityDir(Project project, VirtualFile projectDir, String entity) {
+    /*public static VirtualFile findEntityDir(Project project, VirtualFile projectDir, String entity) {
         // 检查当前目录是否是目标目录
         if (projectDir != null && projectDir.isDirectory() && projectDir.getName().equals("entity")) {
             return projectDir;
@@ -407,5 +409,45 @@ public class GenerateOperationFiles extends AnAction {
             }
         }
         return null;
+    }*/
+
+
+
+
+    public static VirtualFile findEntityDir(VirtualFile projectDir) {
+        return findEntityDirRecursive(projectDir, parentDirName, "entity");
+    }
+
+    private static VirtualFile findEntityDirRecursive(VirtualFile currentDir, String parentDirName, String targetDirName) {
+        // 检查当前目录是否是目标目录
+        if (currentDir != null && currentDir.isDirectory() && currentDir.getName().equals(targetDirName)) {
+            // 检查父目录是否是指定的父目录或其父级
+            if (isParentDirectory(currentDir, parentDirName)) {
+                return currentDir; // 找到符合条件的目标目录，立即返回
+            }
+        }
+
+        // 递归查找子目录
+        VirtualFile[] children = currentDir.getChildren();
+        for (VirtualFile child : children) {
+            VirtualFile found = findEntityDirRecursive(child, parentDirName, targetDirName);
+            if (found != null) {
+                return found; // 如果找到目标目录，立即返回
+            }
+        }
+
+        return null; // 未找到目标目录，返回 null
+    }
+
+    // 检查当前目录的父目录是否是指定的父目录或其父级
+    private static boolean isParentDirectory(VirtualFile currentDir, String parentDirName) {
+        VirtualFile parentDir = currentDir.getParent();
+        while (parentDir != null) {
+            if (parentDir.getName().equals(parentDirName)) {
+                return true; // 找到指定的父目录
+            }
+            parentDir = parentDir.getParent(); // 继续向上查找父目录
+        }
+        return false; // 没有找到指定的父目录
     }
 }
