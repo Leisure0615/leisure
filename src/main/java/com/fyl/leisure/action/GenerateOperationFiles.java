@@ -47,7 +47,10 @@ public class GenerateOperationFiles extends AnAction {
         super("构建业务代码");
     }
 
-    private final static String parentDirName="mariadb";
+    private final static String parentDirName = "mariadb";//实体类存放目录
+
+    private final static String[] removeField = {"deleteTime", "createUserId", "createUserName", "createTime", "isDetected", "updateTime",
+            "updateUserName", "updateUserId", "deleted"};//不需要放进DTO、Vo的字段
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -67,7 +70,7 @@ public class GenerateOperationFiles extends AnAction {
         VirtualFile entity = findEntityDir(projectDir);
         descriptor.setRoots(entity);
         //获取选中的实体类文件
-        VirtualFile entityFile = FileChooser.chooseFile(descriptor, null,project, null);
+        VirtualFile entityFile = FileChooser.chooseFile(descriptor, null, project, null);
         //todo 判断当前选择类不是实体类     选择的不是类型则不执行后续代码
         if (entityFile == null) {
             Messages.showMessageDialog("请选择一个实体类", "提示", Messages.getWarningIcon());
@@ -86,7 +89,7 @@ public class GenerateOperationFiles extends AnAction {
         filedVOS = getFiledsByEntity(entityFile, className, filedVOS);
         //筛选出Id与逻辑删除字段
         String idField = getIdField(filedVOS);
-        if(idField == null){
+        if (idField == null) {
             Messages.showMessageDialog("请给Id加上 @TableId 注解", "提示", Messages.getWarningIcon());
             return;
         }
@@ -159,8 +162,7 @@ public class GenerateOperationFiles extends AnAction {
                     }
                 }
                 //去掉不需要的字段
-                Set<String> fieldsToRemove = new HashSet<>(Arrays.asList("deleteTime", "createUserId", "createUserName", "createTime",
-                        "updateTime", "updateUserName", "updateUserId"));
+                Set<String> fieldsToRemove = new HashSet<>(Arrays.asList(removeField));
                 filedVOS = filedVOS.stream()
                         .filter(filedVO -> !fieldsToRemove.contains(filedVO.getFieldName()))
                         .collect(Collectors.toList());
@@ -388,32 +390,11 @@ public class GenerateOperationFiles extends AnAction {
     }
 
     /**
-     * 查找当前项目entity目录
+     * 查询parentDirName包下的实体类路径
      *
-     * @param project
      * @param projectDir
-     * @param entity
      * @return
      */
-    /*public static VirtualFile findEntityDir(Project project, VirtualFile projectDir, String entity) {
-        // 检查当前目录是否是目标目录
-        if (projectDir != null && projectDir.isDirectory() && projectDir.getName().equals("entity")) {
-            return projectDir;
-        }
-        VirtualFile[] children = projectDir.getChildren();
-        for (VirtualFile child : children) {
-            // 递归查找子目录
-            VirtualFile found = findEntityDir(project, child, "entity");
-            if (found != null) {
-                return found; // 如果找到目标目录，立即返回
-            }
-        }
-        return null;
-    }*/
-
-
-
-
     public static VirtualFile findEntityDir(VirtualFile projectDir) {
         return findEntityDirRecursive(projectDir, parentDirName, "entity");
     }
