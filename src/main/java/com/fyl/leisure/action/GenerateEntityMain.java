@@ -10,7 +10,10 @@ import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.github.yulichang.base.MPJBaseService;
 import com.github.yulichang.base.MPJBaseServiceImpl;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -50,13 +53,22 @@ public class GenerateEntityMain extends AnAction {
         // 界面布局
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
 
+        // 获取上次保存的值
+        PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+        String lastHost = propertiesComponent.getValue("lastHost", "");
+        String lastPort = propertiesComponent.getValue("lastPort", "3306");
+        String lastUser = propertiesComponent.getValue("lastUser", "");
+        String lastPassword = propertiesComponent.getValue("lastPassword", "");
+        String lastDatabase = propertiesComponent.getValue("lastDatabase", "");
+        String lastAuthor = propertiesComponent.getValue("lastAuthor", "");
         // 添加文本框和标签
-        JTextField ipField = new JTextField();
-        JTextField portField = new JTextField("3306");
-        JTextField accountField = new JTextField();
-        JTextField passwordField = new JTextField();
-        JTextField databaseField = new JTextField();
-        JTextField authorField = new JTextField();
+        JTextField ipField = new JTextField(lastHost);
+        JTextField portField = new JTextField(lastPort);
+        JTextField accountField = new JTextField(lastUser);
+        JTextField passwordField = new JTextField(lastPassword);
+        JTextField databaseField = new JTextField(lastDatabase);
+        String userName = System.getProperty("user.name");
+        JTextField authorField = new JTextField("".equals(lastAuthor) ? userName : lastAuthor);
 
         panel.add(new JLabel("Host:"));
         panel.add(ipField);
@@ -86,6 +98,13 @@ public class GenerateEntityMain extends AnAction {
             // 执行 generateMethod() 方法
             try {
                 generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
+                // 成功生成代码，保存输入的值
+                propertiesComponent.setValue("lastHost", ipField.getText());
+                propertiesComponent.setValue("lastPort", portField.getText());
+                propertiesComponent.setValue("lastUser", accountField.getText());
+                propertiesComponent.setValue("lastPassword", passwordField.getText());
+                propertiesComponent.setValue("lastDatabase", databaseField.getText());
+                propertiesComponent.setValue("lastAuthor", authorField.getText());
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
                 Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以尝试右击文件夹再点击从磁盘重新加载或重启IDEA）", "运行成功");
@@ -101,6 +120,19 @@ public class GenerateEntityMain extends AnAction {
             }
         });
         builder.show();
+    }
+
+    /**
+     * 解析模板获取author
+     *
+     * @param header 注释
+     * @return author
+     */
+    private static String parseAuthorFromHeader(String header) {
+        // 此处使用简单的字符串处理方法，你可以根据具体情况使用正则表达式等更复杂的方法来解析
+        int startIndex = header.indexOf("@author") + 7;
+        int endIndex = header.indexOf("\n", startIndex);
+        return header.substring(startIndex, endIndex).trim();
     }
 
     /**
