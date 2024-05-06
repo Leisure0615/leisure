@@ -21,13 +21,13 @@ import java.util.List;
 
 
 /**
-* @author fangyonglong
+* @author ${author}
 * @version 1.0.0
 * @date ${date}
 * @description
 */
 
-@Api(tags = "${className}相关接口")
+@Api(tags = "${entityDescription}相关接口")
 @RestController
 @RequestMapping("${classObject}")
 public class ${className}Controller {
@@ -36,7 +36,7 @@ public class ${className}Controller {
     private ${className}Service ${classObject}Service;
 
     @GetMapping("page${className}.do")
-    @ApiOperation("分页查询${className}")
+    @ApiOperation("分页查询${entityDescription}信息")
     @ApiImplicitParams({
         @ApiImplicitParam(value = "searchKey", name = "关键词搜索", dataType = "string", paramType = "query", required = false)
     })
@@ -45,7 +45,7 @@ public class ${className}Controller {
     }
 
     @GetMapping("list${className}.do")
-    @ApiOperation("列表查询${className}")
+    @ApiOperation("列表查询${entityDescription}信息")
     @ApiImplicitParams({
         @ApiImplicitParam(value = "searchKey", name = "关键词搜索", dataType = "string", paramType = "query", required = false)
     })
@@ -54,32 +54,32 @@ public class ${className}Controller {
     }
 
     @GetMapping("get${className}.do")
-    @ApiOperation("根据Id查询${className}")
+    @ApiOperation("根据Id查询${entityDescription}信息")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "${idField}", name = "${className}流水号", dataType = "string", paramType = "query", required = true)
+        @ApiImplicitParam(value = "${idField}", name = "${idDescription}", dataType = "string", paramType = "query", required = true)
     })
     public Result<${className}> get${className}(String ${idField}){
         return Result.success(${classObject}Service.get${className}(${idField}));
     }
 
     @PostMapping("add${className}.do")
-    @ApiOperation("新增${className}")
+    @ApiOperation("新增${entityDescription}信息")
     public Result<Object> add${className}(${className}DTO ${classObject}DTO){
         ${classObject}Service.add${className}(${classObject}DTO);
         return Result.success();
     }
 
     @PostMapping("update${className}.do")
-    @ApiOperation("修改${className}")
+    @ApiOperation("修改${entityDescription}信息")
     public Result<Object> update${className}(${className}DTO ${classObject}DTO){
          ${classObject}Service.update${className}(${classObject}DTO);
          return Result.success();
     }
 
     @PostMapping("delete${className}.do")
-    @ApiOperation("删除${className}")
+    @ApiOperation("删除${entityDescription}信息")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "${idField}", name = "${className}流水号", dataType = "string", paramType = "query", required = true)
+        @ApiImplicitParam(value = "${idField}", name = "${idDescription}", dataType = "string", paramType = "query", required = true)
     })
     public Result<Object> delete${className}(String ${idField}){
          ${classObject}Service.delete${className}(${idField});

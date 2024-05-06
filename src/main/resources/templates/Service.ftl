@@ -17,7 +17,7 @@ import java.util.UUID;
 
 
 /**
-* @author fangyonglong
+* @author ${author}
 * @version 1.0.0
 * @date ${date}
 * @description

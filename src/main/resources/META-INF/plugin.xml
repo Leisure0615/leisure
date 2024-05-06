@@ -17,10 +17,9 @@
     </applicationListeners>
 
     <actions>
-        <group id="MyPlugin.SampleMenu" text="_Sample Menu" description="Sample menu">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"  />
+        <group id="ProjectViewNewGroup" text="New" description="New">
+            <add-to-group group-id="NewGroup" anchor="last"/>
             <action id="Myplugin.Textboxes" class="com.fyl.leisure.action.GenerateOperationFiles" text="GenerateTable" description="A test menu item" />
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"  />
             <action id="Myplugin.GenerateEntityMain" class="com.fyl.leisure.action.GenerateEntityMain" text="生成实体类" description="A test menu item" />
         </group>
         <!-- 生成实体类功能添加到文件编辑器弹出菜单 -->

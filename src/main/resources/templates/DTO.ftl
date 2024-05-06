@@ -8,13 +8,13 @@ import lombok.EqualsAndHashCode;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
-* @author fangyonglong
+* @author ${author}
 * @version 1.0.0
 * @date ${date}
 * @description
 */
 @Data
-public class ${className}DTO{
+public class ${className}Dto{
 
 <#list fieldList as field>
     <#if field.fieldAnnotation?? && field.fieldAnnotation?has_content>
