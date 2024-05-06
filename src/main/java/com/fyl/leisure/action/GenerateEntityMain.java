@@ -10,8 +10,6 @@ import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.github.yulichang.base.MPJBaseService;
 import com.github.yulichang.base.MPJBaseServiceImpl;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +38,10 @@ import java.util.List;
  * @date 4/26/2024 1:59 PM
  */
 public class GenerateEntityMain extends AnAction {
+
+    // 将下拉列表放在全局变量中以便后续使用
+    private String[] excludeTableNames;
+
     public GenerateEntityMain() {
         super("构建entity、mapper代码");
     }
@@ -82,6 +85,94 @@ public class GenerateEntityMain extends AnAction {
         panel.add(databaseField);
         panel.add(new JLabel("Author:"));
         panel.add(authorField);
+        // 添加连接数据库按钮
+        JButton connectButton = new JButton("连接数据库排除部分表");
+        connectButton.addActionListener(actionEvent -> {
+            // 获取用户输入的数据库连接信息
+            String host = ipField.getText();
+            String port = portField.getText();
+            String user = accountField.getText();
+            String password = passwordField.getText();
+            String database = databaseField.getText();
+            // 尝试连接数据库
+            try {
+                // 手动加载MySQL的JDBC驱动程序
+                Class.forName("com.mysql.cj.jdbc.Driver");
+
+                // 连接数据库
+                Connection conn = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database, user, password);
+
+                // 连接成功，查询数据库中的表名
+                DatabaseMetaData metaData = conn.getMetaData();
+                ResultSet tables = metaData.getTables(database, null, "%", new String[]{"TABLE"});
+
+                // 创建一个新的界面来显示表格样式的选择界面
+                JDialog dialog = new JDialog((JFrame) null, "选择排除的表", true);
+                dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+                // 获取连接成功后查询到的表名列表
+                DefaultListModel<String> tableModel = new DefaultListModel<>();
+                // 填充表名列表
+                while (tables.next()) {
+                    String tableName = tables.getString("TABLE_NAME");
+                    tableModel.addElement(tableName);
+                }
+
+                // 创建一个列表框来显示表名
+                JList<String> tableList = new JList<>(tableModel);
+                // 设置列表框为多选模式
+                tableList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                // 添加列表框到滚动面板中
+                JScrollPane scrollPane = new JScrollPane(tableList);
+
+                // 创建一个完成按钮
+                JButton doneButton = new JButton("完成");
+                doneButton.addActionListener(e1 -> {
+                    // 获取用户选中的表名
+                    List<String> selectedTables = tableList.getSelectedValuesList();
+                    // 将选中的表名以逗号分隔的形式填充到原来的面板中的Label上
+                    StringBuilder selectedTableNames = new StringBuilder();
+                    for (String tableName : selectedTables) {
+                        selectedTableNames.append(tableName).append(",");
+                    }
+                    // 去除最后一个逗号
+                    if (selectedTableNames.length() > 0) {
+                        selectedTableNames.deleteCharAt(selectedTableNames.length() - 1);
+                    }
+                    excludeTableNames = selectedTableNames.toString().split(",");
+                    // 在原来的面板上添加Label，显示用户选择的表名
+                    JLabel selectedTablesLabel = new JLabel(selectedTableNames.toString());
+                    panel.add(new JLabel("排除的数据库表:"));
+                    panel.add(selectedTablesLabel);
+                    // 刷新面板
+                    panel.revalidate();
+                    panel.repaint();
+                    // 关闭表名选择对话框
+                    dialog.dispose();
+                });
+
+                // 添加滚动面板和完成按钮到对话框中
+                dialog.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                dialog.getContentPane().add(doneButton, BorderLayout.SOUTH);
+
+                // 设置对话框大小并显示
+                dialog.pack();
+                // 将对话框置于屏幕中央
+                dialog.setLocationRelativeTo(null);
+                dialog.setVisible(true);
+
+            } catch (ClassNotFoundException ex) {
+                ex.printStackTrace();
+                // JDBC驱动程序加载失败
+                JOptionPane.showMessageDialog(null, "JDBC驱动程序加载失败，请检查MySQL驱动程序是否正确配置！", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                // 连接失败，给出错误提示
+                JOptionPane.showMessageDialog(null, "数据库连接失败，请检查输入的数据库连接信息！", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        panel.add(connectButton);
 
         builder.setCenterPanel(panel);
         builder.addOkAction().setText("下一步");
@@ -97,7 +188,8 @@ public class GenerateEntityMain extends AnAction {
             }
             // 执行 generateMethod() 方法
             try {
-                generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText());
+                generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText(), excludeTableNames);
+                excludeTableNames = null;
                 // 成功生成代码，保存输入的值
                 propertiesComponent.setValue("lastHost", ipField.getText());
                 propertiesComponent.setValue("lastPort", portField.getText());
@@ -138,16 +230,17 @@ public class GenerateEntityMain extends AnAction {
     /**
      * 代码生成方法
      *
-     * @param projectName 项目名称
-     * @param chosenFile  代码输出目录
-     * @param ip          数据库地址
-     * @param port        端口
-     * @param account     用户
-     * @param password    密码
-     * @param database    数据库名
-     * @param author      作者
+     * @param projectName       项目名称
+     * @param chosenFile        代码输出目录
+     * @param ip                数据库地址
+     * @param port              端口
+     * @param account           用户
+     * @param password          密码
+     * @param database          数据库名
+     * @param author            作者
+     * @param excludeTableNames 排除的表
      */
-    public static void generateMethod(String projectName, VirtualFile chosenFile, String ip, String port, String account, String password, String database, String author) {
+    public static void generateMethod(String projectName, VirtualFile chosenFile, String ip, String port, String account, String password, String database, String author, String[] excludeTableNames) {
         AutoGenerator mpg = new AutoGenerator();
         TemplateConfig templateconfig = new TemplateConfig();
         templateconfig.setXml(null).setController(null);
@@ -156,7 +249,7 @@ public class GenerateEntityMain extends AnAction {
         mpg.setGlobalConfig(globalConfig(chosenFile, author));//数据源配
         mpg.setDataSource(dataSource(ip, port, account, password, database));
         // 策略配置
-        mpg.setStrategy(strategy());
+        mpg.setStrategy(strategy(excludeTableNames));
         //解决模板引擎初始化失败的问题
         final ClassLoader oldContextClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(GenerateEntityMain.class.getClassLoader());
@@ -215,7 +308,7 @@ public class GenerateEntityMain extends AnAction {
         gc.setIdType(IdType.INPUT);
         gc.setOpen(false);
         gc.setSwagger2(SWAGGER_ENABLE);
-        gc.setOutputDir(chosenFile.getPath());    //生成文件存放的位位置
+        gc.setOutputDir(chosenFile.getPath());    //生成文件存放的位置
         gc.setFileOverride(RECOVER_ENABLE);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);
@@ -231,14 +324,16 @@ public class GenerateEntityMain extends AnAction {
     /**
      * 配置策略
      *
+     * @param excludeTableNames 排除不生成的表
      * @return 策略
      */
-    private static StrategyConfig strategy() {
+    private static StrategyConfig strategy(String[] excludeTableNames) {
         StrategyConfig strategy = new StrategyConfig();
         strategy.setLogicDeleteFieldName("delete_flag");
         strategy.setTablePrefix(""); // 去掉表名前缓
         strategy.setNaming(NamingStrategy.underline_to_camel);//表名生成策略(underline_to_camel,下划线转驼峰命名)
-        strategy.setExclude("interface_info");
+        strategy.setExclude(excludeTableNames);
+//        strategy.setExclude("interface_info");
         strategy.setColumnNaming(NamingStrategy.underline_to_camel);
         strategy.setSuperControllerClass("alp.starcode.mcsu.framework.base.BaseController");//自定义继承的Controller类全
         strategy.setEntityLombokModel(true);
