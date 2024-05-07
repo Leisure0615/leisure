@@ -1,6 +1,7 @@
 package com.fyl.leisure.action;
 
 
+import com.fyl.leisure.dto.CreateFileDTO;
 import com.fyl.leisure.vo.EntityVO;
 import com.fyl.leisure.vo.FilePathVO;
 import com.fyl.leisure.vo.FiledVO;
@@ -54,11 +55,12 @@ public class GenerateOperationFiles extends AnAction {
 
         super("构建业务代码");
     }
-
+    /******************************************             可修改参数              ****************************************/
     private final static String parentDirName = "mariadb";//实体类存放目录
 
     private final static String[] removeField = {"deleteTime", "createUserId", "createUserName", "createTime", "isDetected", "updateTime",
             "updateUserName", "updateUserId", "deleted", "serialVersionUID"};//不需要放进DTO、Vo的字段
+    /*********************************************************************************************************************/
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -67,17 +69,17 @@ public class GenerateOperationFiles extends AnAction {
         if (projectDir == null) {
             return;
         }
-        //第一步  获取鼠标右键点击的目录
+        CreateFileDTO createFileDTO = new CreateFileDTO();
+        //获取鼠标右键点击的目录
         VirtualFile chooseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
-        //构建目录 默认打开entity目录
+        //构建文件选择器 默认打开mariadb目录下的entity目录
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
         VirtualFile entity = findEntityDir(projectDir);
         descriptor.setRoots(entity);
         //获取选中的实体类文件
         VirtualFile entityFile = FileChooser.chooseFile(descriptor, null, project, null);
-        //todo 判断当前选择类不是实体类     选择的不是类型则不执行后续代码
         //获取实体类名字，去掉.java后缀
-        String className = null;
+        String className;
         int dotIndex = entityFile.getName().lastIndexOf('.');
         if (dotIndex != -1) {
             className = entityFile.getName().substring(0, dotIndex);
@@ -94,6 +96,9 @@ public class GenerateOperationFiles extends AnAction {
         IdFieldAndDescription idFieldAndDescription = optionalIdFieldAndDescription.get();
         String idField = idFieldAndDescription.getIdField();
         String idDescription = idFieldAndDescription.getIdDescription();
+        if(idDescription==null){
+            idDescription=idField;
+        }
         //获取@author信息
         // 获取上次保存的值
         PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -106,13 +111,20 @@ public class GenerateOperationFiles extends AnAction {
         panel.add(new JLabel("Author :"));
         panel.add(authorField);
         builder.setCenterPanel(panel);
-        List<FiledVO> finalFiledVOS = filedVOS;
-        String finalClassName = className;
+        //放入创建文件所需
+        createFileDTO.setFiledVOS(filedVOS);
+        createFileDTO.setClassName(className);
+        createFileDTO.setEntityDescription(entityDescription);
+        createFileDTO.setEntityFile(entityFile);
+        createFileDTO.setChooseDir(chooseDir);
+        createFileDTO.setIdField(idField);
+        createFileDTO.setIdDescription(idDescription);
         builder.setOkOperation(() -> {
-            propertiesComponent.setValue("defaultAuthor", authorField.getText());
+            createFileDTO.setAuthorField(authorField.getText());
+            propertiesComponent.setValue("defaultAuthor", createFileDTO.getAuthorField());
             builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
             //在当前鼠标右键选择的目录生成文件
-            generateDir(finalFiledVOS, finalClassName, chooseDir, entityFile, idField, authorField.getText(), entityDescription, idDescription);
+            generateDir(createFileDTO);
         });
         builder.show();
         chooseDir.refresh(false, true);
@@ -145,9 +157,8 @@ public class GenerateOperationFiles extends AnAction {
                             return Optional.empty();
                         });
 
-                if (apiModelPropertyValue.isPresent()) {
-                    return fieldNameOptional.map(fieldName -> new IdFieldAndDescription(fieldName, apiModelPropertyValue.get()));
-                }
+                String idDescription = apiModelPropertyValue.orElse(null);
+                return fieldNameOptional.map(fieldName -> new IdFieldAndDescription(fieldName, idDescription));
             }
         }
 
@@ -157,28 +168,24 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 在当前鼠标右键选择的目录生成文件
      *
-     * @param filedVOS      字段集合
-     * @param className     实体类名字
-     * @param chooseDir     选择目录
-     * @param entityFile    实体类文件
-     * @param idField       ID字段
-     * @param author
-     * @param idDescription
+     * @param createFileDTO 创建文件传输对象
      */
-    private void generateDir(List<FiledVO> filedVOS, String className, VirtualFile chooseDir, VirtualFile entityFile, String idField, String author, String entityDescription, String idDescription) {
+    private void generateDir(CreateFileDTO createFileDTO) {
         Application applicationManager = ApplicationManager.getApplication();
         applicationManager.runWriteAction(() -> {
             try {
                 Configuration configuration = new Configuration();
                 configuration.setClassForTemplateLoading(getClass(), "/templates");
                 configuration.setDefaultEncoding("UTF-8");
-                Writer out = null;
+                createFileDTO.setConfiguration(configuration);
                 //生成DTO与VO
-                FilePathVO filePathVO = createModel(chooseDir, filedVOS, className, configuration, out, author);
+                FilePathVO filePathVO = createModel(createFileDTO);
+                createFileDTO.setFilePathVO(filePathVO);
                 //生成Service
-                String servicePath = createService(chooseDir, className, configuration, out, filePathVO, entityFile, idField, author);
+                String servicePath = createService(createFileDTO);
+                createFileDTO.setServicePath(servicePath);
                 //生成Controller
-                createController(chooseDir, className, configuration, out, filePathVO, entityFile, servicePath, idField, author, entityDescription, idDescription);
+                createController(createFileDTO);
 
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -244,45 +251,33 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 生成controller文件夹夹以及controller文件
      *
-     * @param chooseDir     选择目录
-     * @param className     实体类名字
-     * @param filePathVO    包路径对象
-     * @param entityFile    实体类对象
-     * @param servicePath   Service路径
-     * @param idField
-     * @param author
-     * @param idDescription
+     * @param createFileDTO 创建文件传输对象
      */
-    private static void createController(VirtualFile chooseDir, String className, Configuration configuration,
-                                         Writer out, FilePathVO filePathVO, VirtualFile entityFile,
-                                         String servicePath, String idField, String author,
-                                         String entityDescription, String idDescription) throws IOException, TemplateException {
-        VirtualFile controller = chooseDir.createChildDirectory(null, "controller");
+    private static void createController(CreateFileDTO createFileDTO) throws IOException, TemplateException {
+        VirtualFile controller = createFileDTO.getChooseDir().createChildDirectory(null, "controller");
         // 将类名字首字母转换为小写
-        char firstCharLower = Character.toLowerCase(className.charAt(0));
-        String remainingString = className.substring(1);
-        //根据点击的实体类中找到Dao包的路径
-        VirtualFile daoPathByEntity = findDaoPathByEntity(entityFile, className);
+        char firstCharLower = Character.toLowerCase(createFileDTO.getClassName().charAt(0));
+        String remainingString = createFileDTO.getClassName().substring(1);
         // 组合新的字符串
         String classObject = firstCharLower + remainingString;
-        Map<String, Object> dataMap = new HashMap<String, Object>();
+        Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("package", convertPathToPackageName(controller.getPath()));
-        dataMap.put("entityImport", convertPathToPackageName(entityFile.getPath()));
-        dataMap.put("dtoImport", filePathVO.getDtoPath());
-        dataMap.put("voImport", filePathVO.getVoPath());
-        dataMap.put("serviceImport", servicePath);
-        dataMap.put("className", className);
+        dataMap.put("entityImport", convertPathToPackageName(createFileDTO.getEntityFile().getPath()));
+        dataMap.put("dtoImport", createFileDTO.getFilePathVO().getDtoPath());
+        dataMap.put("voImport", createFileDTO.getFilePathVO().getVoPath());
+        dataMap.put("serviceImport", createFileDTO.getServicePath());
+        dataMap.put("className", createFileDTO.getClassName());
         dataMap.put("classObject", classObject);
         dataMap.put("date", currentTime());
-        dataMap.put("idField", idField);
-        dataMap.put("author", author);
-        dataMap.put("entityDescription", entityDescription);
-        dataMap.put("idDescription", idDescription);
+        dataMap.put("idField", createFileDTO.getIdField());
+        dataMap.put("author", createFileDTO.getAuthorField());
+        dataMap.put("entityDescription", createFileDTO.getEntityDescription());
+        dataMap.put("idDescription", createFileDTO.getIdDescription());
         // step4 加载模版文件
-        Template template = configuration.getTemplate("Controller.ftl");
+        Template template = createFileDTO.getConfiguration().getTemplate("Controller.ftl");
         // step5 生成数据
-        File docFile = new File(controller.getPath() + "\\" + className + "Controller.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
+        File docFile = new File(controller.getPath() + "\\" + createFileDTO.getClassName() + "Controller.java");
+        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
     }
@@ -290,46 +285,38 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 生成service文件夹以及Service文件
      *
-     * @param chooseDir     选择的目录
-     * @param className     实体类名字
-     * @param configuration 模板设置对象
-     * @param filePathVO    路径对象，包括dto路径，dao路径，vo路径
-     * @param entityFile    实体类路径对象
-     * @param idField
-     * @param author
-     * @return
-     * @throws IOException
+     * @param createFileDTO 创建文件传输对象
      */
-    private static String createService(VirtualFile chooseDir, String className, Configuration configuration, Writer out, FilePathVO filePathVO, VirtualFile entityFile, String idField, String author) throws IOException, TemplateException {
-        VirtualFile service = chooseDir.createChildDirectory(null, "service");
+    private static String createService(CreateFileDTO createFileDTO) throws IOException, TemplateException {
+        VirtualFile service = createFileDTO.getChooseDir().createChildDirectory(null, "service");
         // 将类名字首字母转换为小写
-        char firstCharLower = Character.toLowerCase(className.charAt(0));
-        String remainingString = className.substring(1);
+        char firstCharLower = Character.toLowerCase(createFileDTO.getClassName().charAt(0));
+        String remainingString = createFileDTO.getClassName().substring(1);
         String classObject = firstCharLower + remainingString;
         //将Id字段首字母转化为大写
-        char firstCharUpperCase = Character.toUpperCase(idField.charAt(0));
-        String remainingStringId = idField.substring(1);
+        char firstCharUpperCase = Character.toUpperCase(createFileDTO.getIdField().charAt(0));
+        String remainingStringId = createFileDTO.getIdField().substring(1);
         String IdField = firstCharUpperCase + remainingStringId;
         //根据点击的实体类中找到Dao包的路径
-        VirtualFile daoPathByEntity = findDaoPathByEntity(entityFile, className);
+        VirtualFile daoPathByEntity = findDaoPathByEntity(createFileDTO.getEntityFile(), createFileDTO.getClassName());
         // 组合新的字符串
-        Map<String, Object> dataMap = new HashMap<String, Object>();
+        Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("package", convertPathToPackageName(service.getPath()));
-        dataMap.put("entityImport", convertPathToPackageName(entityFile.getPath()));
+        dataMap.put("entityImport", convertPathToPackageName(createFileDTO.getEntityFile().getPath()));
         dataMap.put("daoImport", convertPathToPackageName(daoPathByEntity.getPath()));
-        dataMap.put("dtoImport", filePathVO.getDtoPath());
-        dataMap.put("voImport", filePathVO.getVoPath());
-        dataMap.put("className", className);
+        dataMap.put("dtoImport", createFileDTO.getFilePathVO().getDtoPath());
+        dataMap.put("voImport", createFileDTO.getFilePathVO().getVoPath());
+        dataMap.put("className", createFileDTO.getClassName());
         dataMap.put("classObject", classObject);
         dataMap.put("date", currentTime());
-        dataMap.put("idField", idField);
+        dataMap.put("idField", createFileDTO.getIdField());
         dataMap.put("IdField", IdField);
-        dataMap.put("author", author);
+        dataMap.put("author", createFileDTO.getAuthorField());
         // step4 加载模版文件
-        Template template = configuration.getTemplate("Service.ftl");
+        Template template = createFileDTO.getConfiguration().getTemplate("Service.ftl");
         // step5 生成数据
-        File docFile = new File(service.getPath() + "\\" + className + "Service.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
+        File docFile = new File(service.getPath() + "\\" + createFileDTO.getClassName() + "Service.java");
+        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回Service文件路径
@@ -339,46 +326,36 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 生成model文件夹
      *
-     * @param chooseDir      选择目录
-     * @param filedVOS       字段集合
-     * @param finalClassName 实体类名字
-     * @param configuration  模板设置对象
-     * @param author
-     * @throws IOException
-     * @throws TemplateException
+     * @param createFileDTO 创建文件传输对象
+     * @return FilePathVO DTO与VO路径对象
      */
-    private static FilePathVO createModel(VirtualFile chooseDir, List<FiledVO> filedVOS, String finalClassName, Configuration configuration, Writer out, String author) throws IOException, TemplateException {
-        VirtualFile model = chooseDir.createChildDirectory(null, "model");
+    private static FilePathVO createModel(CreateFileDTO createFileDTO) throws Exception {
+        VirtualFile model = createFileDTO.getChooseDir().createChildDirectory(null, "model");
         FilePathVO filePathVO = new FilePathVO();
-        filePathVO.setDtoPath(creatDTO(filedVOS, model, finalClassName, configuration, out, author));
-        filePathVO.setVoPath(creatVO(filedVOS, model, finalClassName, configuration, out, author));
+        filePathVO.setDtoPath(creatDTO(createFileDTO, model));
+        filePathVO.setVoPath(creatVO(createFileDTO, model));
         return filePathVO;
     }
 
     /**
      * 生成VO文件
      *
-     * @param filedVOS       字段集合
-     * @param model          model目录对象
-     * @param finalClassName 实体类名字
-     * @param configuration  模板设置对象
-     * @param author
-     * @throws IOException
-     * @throws TemplateException
+     * @param createFileDTO 创建文件传输对象
+     * @param model         model目录对象
      */
-    private static String creatVO(List<FiledVO> filedVOS, VirtualFile model, String finalClassName, Configuration configuration, Writer out, String author) throws IOException, TemplateException {
+    private static String creatVO(CreateFileDTO createFileDTO, VirtualFile model) throws Exception {
         VirtualFile vo = model.createChildDirectory(null, "vo");
-        Map<String, Object> dataMap = new HashMap<String, Object>();
+        Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("package", convertPathToPackageName(vo.getPath()));
-        dataMap.put("className", finalClassName);
-        dataMap.put("fieldList", filedVOS);
+        dataMap.put("className", createFileDTO.getClassName());
+        dataMap.put("fieldList", createFileDTO.getFiledVOS());
         dataMap.put("date", currentTime());
-        dataMap.put("author", author);
+        dataMap.put("author", createFileDTO.getAuthorField());
         // step4 加载模版文件
-        Template template = configuration.getTemplate("VO.ftl");
+        Template template = createFileDTO.getConfiguration().getTemplate("VO.ftl");
         // step5 生成数据
-        File docFile = new File(vo.getPath() + "\\" + finalClassName + "Vo.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
+        File docFile = new File(vo.getPath() + "\\" + createFileDTO.getClassName() + "Vo.java");
+        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回VO文件路径
@@ -388,28 +365,22 @@ public class GenerateOperationFiles extends AnAction {
     /**
      * 生成DTO文件
      *
-     * @param filedVOS       字段集合
-     * @param model          model目录对象
-     * @param finalClassName 实体类名字
-     * @param configuration  模板设置对象
-     * @param author
-     * @throws IOException
-     * @throws TemplateException
+     * @param createFileDTO 创建文件传输对象
+     * @param model         model目录对象
      */
-    private static String creatDTO(List<FiledVO> filedVOS, VirtualFile model, String finalClassName, Configuration configuration, Writer out, String author) throws IOException, TemplateException {
+    private static String creatDTO(CreateFileDTO createFileDTO, VirtualFile model) throws Exception {
         VirtualFile dto = model.createChildDirectory(null, "dto");
-        Map<String, Object> dataMap = new HashMap<String, Object>();
-        System.out.println(dto.getPath());
+        Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("package", convertPathToPackageName(dto.getPath()));
-        dataMap.put("className", finalClassName);
-        dataMap.put("fieldList", filedVOS);
+        dataMap.put("className", createFileDTO.getClassName());
+        dataMap.put("fieldList", createFileDTO.getFiledVOS());
         dataMap.put("date", currentTime());
-        dataMap.put("author", author);
+        dataMap.put("author", createFileDTO.getAuthorField());
         // step4 加载模版文件
-        Template template = configuration.getTemplate("DTO.ftl");
+        Template template = createFileDTO.getConfiguration().getTemplate("DTO.ftl");
         // step5 生成数据
-        File docFile = new File(dto.getPath() + "\\" + finalClassName + "Dto.java");
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
+        File docFile = new File(dto.getPath() + "\\" + createFileDTO.getClassName() + "Dto.java");
+        Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docFile), "UTF-8"));
         // step6 输出文件
         template.process(dataMap, out);
         //返回DTO文件路径
@@ -418,16 +389,13 @@ public class GenerateOperationFiles extends AnAction {
 
     /**
      * 获取当前时间
-     *
-     * @return
      */
     private static String currentTime() {
         LocalDate currentDate = LocalDate.now();
         // 创建一个日期时间格式化器，用于格式化日期为"yyyy-MM-dd"的格式
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
         // 格式化当前日期为字符串
-        String formattedDate = currentDate.format(formatter);
-        return formattedDate;
+        return currentDate.format(formatter);
     }
 
     /**
@@ -460,7 +428,6 @@ public class GenerateOperationFiles extends AnAction {
             for (VirtualFile child : parentOfParent.getChildren()) {
                 if (child.isDirectory() && "dao".equals(child.getName())) {
                     for (VirtualFile childChild : child.getChildren()) {
-                        System.out.println(childChild.getName());
                         if (!childChild.isDirectory() && daoName.equals(childChild.getName())) {
                             return childChild;
                         }
@@ -473,14 +440,14 @@ public class GenerateOperationFiles extends AnAction {
 
     /**
      * 查询parentDirName包下的实体类路径
-     *
-     * @param projectDir
-     * @return
      */
     public static VirtualFile findEntityDir(VirtualFile projectDir) {
         return findEntityDirRecursive(projectDir, parentDirName, "entity");
     }
 
+    /**
+     * 查找mariadb目录下的entity目录
+     */
     private static VirtualFile findEntityDirRecursive(VirtualFile currentDir, String parentDirName, String targetDirName) {
         // 检查当前目录是否是目标目录
         if (currentDir != null && currentDir.isDirectory() && currentDir.getName().equals(targetDirName)) {
@@ -489,7 +456,6 @@ public class GenerateOperationFiles extends AnAction {
                 return currentDir; // 找到符合条件的目标目录，立即返回
             }
         }
-
         // 递归查找子目录
         VirtualFile[] children = currentDir.getChildren();
         for (VirtualFile child : children) {
@@ -498,7 +464,6 @@ public class GenerateOperationFiles extends AnAction {
                 return found; // 如果找到目标目录，立即返回
             }
         }
-
         return null; // 未找到目标目录，返回 null
     }
 
