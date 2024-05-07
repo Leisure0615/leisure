@@ -99,21 +99,23 @@ public class GenerateOperationFiles extends AnAction {
         PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
         String defaultAuthor = propertiesComponent.getValue("defaultAuthor", "");
         JTextField authorField = new JTextField("".equals(defaultAuthor) ? "" : defaultAuthor);
+        //弹出输入框输入作者名字并持久化
         DialogBuilder builder = new DialogBuilder(project);
         builder.setTitle("请输入作者信息");
         JPanel panel = new JPanel(new GridLayout(1, 2, 5, 5));
         panel.add(new JLabel("Author :"));
         panel.add(authorField);
         builder.setCenterPanel(panel);
-        //在当前鼠标右键选择的目录生成文件
         List<FiledVO> finalFiledVOS = filedVOS;
         String finalClassName = className;
         builder.setOkOperation(() -> {
             propertiesComponent.setValue("defaultAuthor", authorField.getText());
             builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+            //在当前鼠标右键选择的目录生成文件
             generateDir(finalFiledVOS, finalClassName, chooseDir, entityFile, idField, authorField.getText(), entityDescription, idDescription);
         });
         builder.show();
+        chooseDir.refresh(false, true);
     }
 
     private static Optional<IdFieldAndDescription> getIdField(List<FiledVO> filedVOS) {
