@@ -60,8 +60,12 @@ public class GenerateEntityMain extends AnAction {
         // 创建一个对话框
         DialogBuilder builder = new DialogBuilder(project);
         builder.setTitle("请输入MySQL数据库信息和作者信息");
+        // 创建一个主面板，使用 BorderLayout 布局管理器
+        JPanel mainPanel = new JPanel(new BorderLayout());
         // 界面布局
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        // 将第一个面板添加到主面板的中心（Center）
+        mainPanel.add(panel, BorderLayout.CENTER);
 
         // 获取上次保存的值
         PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -111,6 +115,8 @@ public class GenerateEntityMain extends AnAction {
             panel.add(new JLabel("排除的表:"));
             panel.add(selectedTablesLabel);
         }
+        // 创建第二个面板
+        JPanel panel2 = new JPanel();
 
         // 修改原有按钮的监听器
         connectButton.addActionListener(actionEvent -> {
@@ -193,7 +199,14 @@ public class GenerateEntityMain extends AnAction {
                 // 添加复选框面板和完成按钮到对话框中
                 dialog.getContentPane().add(new JScrollPane(checkBoxPanel), BorderLayout.CENTER);
                 dialog.getContentPane().add(doneButton, BorderLayout.SOUTH);
-
+                
+                // 获取屏幕尺寸
+                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                // 计算对话框宽度为屏幕宽度的一半
+                int dialogWidth = screenSize.width / 4;
+                int dialogHeight = screenSize.height / 2;
+                // 设置对话框的宽度为计算出的宽度，高度为默认值
+                dialog.setPreferredSize(new Dimension(dialogWidth, dialogHeight));
                 // 设置对话框大小并显示
                 dialog.pack();
                 // 将对话框置于屏幕中央
@@ -211,9 +224,11 @@ public class GenerateEntityMain extends AnAction {
             }
         });
 
-        panel.add(connectButton, Component.CENTER_ALIGNMENT);
+        panel2.add(connectButton, Component.CENTER_ALIGNMENT);
+        // 将第二个面板添加到主面板的底部
+        mainPanel.add(panel2, BorderLayout.SOUTH);
 
-        builder.setCenterPanel(panel);
+        builder.setCenterPanel(mainPanel);
         builder.addOkAction().setText("下一步");
         builder.setOkOperation(() -> {
             // 弹出文件目录选择器
