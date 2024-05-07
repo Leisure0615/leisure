@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -59,8 +60,12 @@ public class GenerateEntityMain extends AnAction {
         // 创建一个对话框
         DialogBuilder builder = new DialogBuilder(project);
         builder.setTitle("请输入MySQL数据库信息和作者信息");
+        // 创建一个主面板，使用 BorderLayout 布局管理器
+        JPanel mainPanel = new JPanel(new BorderLayout());
         // 界面布局
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        // 将第一个面板添加到主面板的中心（Center）
+        mainPanel.add(panel, BorderLayout.CENTER);
 
         // 获取上次保存的值
         PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -91,22 +96,27 @@ public class GenerateEntityMain extends AnAction {
         panel.add(databaseField);
         panel.add(new JLabel("Author:"));
         panel.add(authorField);
-        panel.add(new JLabel("排除的数据库表:"));
-
+        if (selectedTablesLabel.getParent() != null) {
+            panel.add(new JLabel("排除的表:"));
+            panel.add(selectedTablesLabel);
+        }
         // 添加连接数据库按钮
         JButton connectButton = new JButton("排除指定表");
         // 检查之前是否选中过该表，如果是，则设置为选中状态
         String[] tableNames = propertiesComponent.getValues("selectedTables");
-        String name = String.join(",", tableNames);
         if (tableNames != null) {
+            String name = String.join(",", tableNames);
             selectedTablesSet.addAll(Arrays.asList(tableNames));
+            excludeTableNames = tableNames;
+            selectedTablesLabel.setText(name);
         }
-        excludeTableNames = tableNames;
-        selectedTablesLabel.setText(name);
         // 如果标签还没有添加到面板上，就添加它
-        if (selectedTablesLabel.getParent() == null) {
+        if (selectedTablesLabel.getParent() == null && !(tableNames == null || tableNames.length == 0)) {
+            panel.add(new JLabel("排除的表:"));
             panel.add(selectedTablesLabel);
         }
+        // 创建第二个面板
+        JPanel panel2 = new JPanel();
 
         // 修改原有按钮的监听器
         connectButton.addActionListener(actionEvent -> {
@@ -171,6 +181,7 @@ public class GenerateEntityMain extends AnAction {
                     excludeTableNames = selectedTableNames.toString().split(",");
                     // 如果标签还没有添加到面板上，就添加它
                     if (selectedTablesLabel.getParent() == null) {
+                        panel.add(new JLabel("排除的表:"));
                         panel.add(selectedTablesLabel);
                     }
                     // 刷新面板
@@ -188,7 +199,14 @@ public class GenerateEntityMain extends AnAction {
                 // 添加复选框面板和完成按钮到对话框中
                 dialog.getContentPane().add(new JScrollPane(checkBoxPanel), BorderLayout.CENTER);
                 dialog.getContentPane().add(doneButton, BorderLayout.SOUTH);
-
+                
+                // 获取屏幕尺寸
+                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                // 计算对话框宽度为屏幕宽度的一半
+                int dialogWidth = screenSize.width / 4;
+                int dialogHeight = screenSize.height / 2;
+                // 设置对话框的宽度为计算出的宽度，高度为默认值
+                dialog.setPreferredSize(new Dimension(dialogWidth, dialogHeight));
                 // 设置对话框大小并显示
                 dialog.pack();
                 // 将对话框置于屏幕中央
@@ -206,9 +224,11 @@ public class GenerateEntityMain extends AnAction {
             }
         });
 
-        panel.add(connectButton, Component.CENTER_ALIGNMENT);
+        panel2.add(connectButton, Component.CENTER_ALIGNMENT);
+        // 将第二个面板添加到主面板的底部
+        mainPanel.add(panel2, BorderLayout.SOUTH);
 
-        builder.setCenterPanel(panel);
+        builder.setCenterPanel(mainPanel);
         builder.addOkAction().setText("下一步");
         builder.setOkOperation(() -> {
             // 弹出文件目录选择器
@@ -235,13 +255,16 @@ public class GenerateEntityMain extends AnAction {
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
                 Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以尝试右击文件夹再点击从磁盘重新加载或重启IDEA）", "运行成功");
-                // 刷新侧边栏目录
+                // 刷新侧边栏目录和重载磁盘
                 ApplicationManager.getApplication().runWriteAction(() -> {
                     ProjectView projectView = ProjectView.getInstance(project);
                     if (projectView != null) {
                         projectView.refresh();
                     }
                 });
+                //重新载入文件
+                VirtualFile chooseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
+                chooseDir.refresh(false, true);
             } catch (Exception ex) {
                 Messages.showErrorDialog("请检查数据库连接验证信息和数据库名是否输入正确", "生成实体类代码失败");
             }
