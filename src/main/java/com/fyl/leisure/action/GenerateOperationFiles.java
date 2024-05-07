@@ -53,7 +53,7 @@ public class GenerateOperationFiles extends AnAction {
 
     public GenerateOperationFiles() {
 
-        super("构建业务代码");
+        super("新建Controller、Service代码");
     }
     /******************************************             可修改参数              ****************************************/
     private final static String parentDirName = "mariadb";//实体类存放目录
@@ -127,7 +127,7 @@ public class GenerateOperationFiles extends AnAction {
             generateDir(createFileDTO);
         });
         builder.show();
-        chooseDir.refresh(false, true);
+        chooseDir.refresh(true, true);
     }
 
     private static Optional<IdFieldAndDescription> getIdField(List<FiledVO> filedVOS) {
