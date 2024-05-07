@@ -40,7 +40,7 @@ public class ${className}Controller {
     @ApiImplicitParams({
         @ApiImplicitParam(value = "searchKey", name = "关键词搜索", dataType = "string", paramType = "query", required = false)
     })
-    public Result<Pagination<${className}VO>> page${className}(Pagination<${className}VO> page, String searchKey){
+    public Result<Pagination<${className}Vo>> page${className}(Pagination<${className}Vo> page, String searchKey){
         return Result.success(${classObject}Service.page${className}(page,searchKey));
     }
 
@@ -49,7 +49,7 @@ public class ${className}Controller {
     @ApiImplicitParams({
         @ApiImplicitParam(value = "searchKey", name = "关键词搜索", dataType = "string", paramType = "query", required = false)
     })
-    public Result<List<${className}VO>> list${className}(String searchKey){
+    public Result<List<${className}Vo>> list${className}(String searchKey){
         return Result.success(${classObject}Service.list${className}(searchKey));
     }
 
@@ -64,15 +64,15 @@ public class ${className}Controller {
 
     @PostMapping("add${className}.do")
     @ApiOperation("新增${entityDescription}信息")
-    public Result<Object> add${className}(${className}DTO ${classObject}DTO){
-        ${classObject}Service.add${className}(${classObject}DTO);
+    public Result<Object> add${className}(${className}Dto ${classObject}Dto){
+        ${classObject}Service.add${className}(${classObject}Dto);
         return Result.success();
     }
 
     @PostMapping("update${className}.do")
     @ApiOperation("修改${entityDescription}信息")
-    public Result<Object> update${className}(${className}DTO ${classObject}DTO){
-         ${classObject}Service.update${className}(${classObject}DTO);
+    public Result<Object> update${className}(${className}Dto ${classObject}Dto){
+         ${classObject}Service.update${className}(${classObject}Dto);
          return Result.success();
     }
 

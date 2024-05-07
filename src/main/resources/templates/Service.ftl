@@ -34,20 +34,20 @@ public class ${className}Service {
     * @param page
     * @param searchKey
     */
-    public Pagination<${className}VO> page${className}(Pagination<${className}VO> page, String searchKey){
+    public Pagination<${className}Vo> page${className}(Pagination<${className}Vo> page, String searchKey){
         MPJLambdaWrapper<${className}> wrapper = new MPJLambdaWrapper<>();
 
-        return ${classObject}Dao.selectJoinListPage(page, ${className}VO.class, wrapper);
+        return ${classObject}Dao.selectJoinListPage(page, ${className}Vo.class, wrapper);
     }
 
     /**
     * 列表查询
     * @param searchKey
     */
-    public List<${className}VO> list${className}(String searchKey){
+    public List<${className}Vo> list${className}(String searchKey){
          MPJLambdaWrapper<${className}> wrapper = new MPJLambdaWrapper<>();
 
-         return ${classObject}Dao.selectJoinList(${className}VO.class, wrapper);
+         return ${classObject}Dao.selectJoinList(${className}Vo.class, wrapper);
     }
 
     /**
@@ -61,24 +61,24 @@ public class ${className}Service {
 
     /**
     * 新增方法
-    * @param ${classObject}DTO
+    * @param ${classObject}Dto
     */
     @Transactional(rollbackFor = Exception.class)
-    public void add${className}(${className}DTO ${classObject}DTO) {
+    public void add${className}(${className}Dto ${classObject}Dto) {
         ${className} ${classObject} = new ${className}();
-        BeanUtils.copyProperties(${classObject}DTO,${classObject});
+        BeanUtils.copyProperties(${classObject}Dto,${classObject});
         ${classObject}.set${IdField}(UUID.randomUUID().toString());
         ${classObject}Dao.saveOrUpdate(${classObject});
     }
 
     /**
     * 修改方法
-    * @param ${classObject}DTO
+    * @param ${classObject}Dto
     */
     @Transactional(rollbackFor = Exception.class)
-    public void update${className}(${className}DTO ${classObject}DTO) {
+    public void update${className}(${className}Dto ${classObject}Dto) {
         ${className} ${classObject} = new ${className}();
-        BeanUtils.copyProperties(${classObject}DTO,${classObject});
+        BeanUtils.copyProperties(${classObject}Dto,${classObject});
         ${classObject}Dao.updateById(${classObject});
     }
 
