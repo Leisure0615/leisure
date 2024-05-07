@@ -91,9 +91,10 @@ public class GenerateEntityMain extends AnAction {
         panel.add(databaseField);
         panel.add(new JLabel("Author:"));
         panel.add(authorField);
+        panel.add(new JLabel("排除的数据库表:"));
 
-// 添加连接数据库按钮
-        JButton connectButton = new JButton("连接数据库排除部分表");
+        // 添加连接数据库按钮
+        JButton connectButton = new JButton("排除指定表");
         // 检查之前是否选中过该表，如果是，则设置为选中状态
         String[] tableNames = propertiesComponent.getValues("selectedTables");
         String name = String.join(",", tableNames);
@@ -104,11 +105,10 @@ public class GenerateEntityMain extends AnAction {
         selectedTablesLabel.setText(name);
         // 如果标签还没有添加到面板上，就添加它
         if (selectedTablesLabel.getParent() == null) {
-            panel.add(new JLabel("排除的数据库表:"));
             panel.add(selectedTablesLabel);
         }
 
-// 修改原有按钮的监听器
+        // 修改原有按钮的监听器
         connectButton.addActionListener(actionEvent -> {
             // 获取用户输入的数据库连接信息
             String host = ipField.getText();
@@ -171,7 +171,6 @@ public class GenerateEntityMain extends AnAction {
                     excludeTableNames = selectedTableNames.toString().split(",");
                     // 如果标签还没有添加到面板上，就添加它
                     if (selectedTablesLabel.getParent() == null) {
-                        panel.add(new JLabel("排除的数据库表:"));
                         panel.add(selectedTablesLabel);
                     }
                     // 刷新面板
