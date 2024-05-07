@@ -28,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author tangzhipeng
@@ -41,6 +41,12 @@ public class GenerateEntityMain extends AnAction {
 
     // 将下拉列表放在全局变量中以便后续使用
     private String[] excludeTableNames;
+
+    // 在类的开头定义一个集合来存储选中的表名
+    private Set<String> selectedTablesSet = new HashSet<>();
+
+    // 在类的开头定义一个标签来显示选中的表名
+    JLabel selectedTablesLabel = new JLabel();
 
     public GenerateEntityMain() {
         super("构建entity、mapper代码");
@@ -85,8 +91,24 @@ public class GenerateEntityMain extends AnAction {
         panel.add(databaseField);
         panel.add(new JLabel("Author:"));
         panel.add(authorField);
+        panel.add(new JLabel("排除的数据库表:"));
+
         // 添加连接数据库按钮
-        JButton connectButton = new JButton("连接数据库排除部分表");
+        JButton connectButton = new JButton("排除指定表");
+        // 检查之前是否选中过该表，如果是，则设置为选中状态
+        String[] tableNames = propertiesComponent.getValues("selectedTables");
+        String name = String.join(",", tableNames);
+        if (tableNames != null) {
+            selectedTablesSet.addAll(Arrays.asList(tableNames));
+        }
+        excludeTableNames = tableNames;
+        selectedTablesLabel.setText(name);
+        // 如果标签还没有添加到面板上，就添加它
+        if (selectedTablesLabel.getParent() == null) {
+            panel.add(selectedTablesLabel);
+        }
+
+        // 修改原有按钮的监听器
         connectButton.addActionListener(actionEvent -> {
             // 获取用户输入的数据库连接信息
             String host = ipField.getText();
@@ -94,6 +116,7 @@ public class GenerateEntityMain extends AnAction {
             String user = accountField.getText();
             String password = passwordField.getText();
             String database = databaseField.getText();
+
             // 尝试连接数据库
             try {
                 // 手动加载MySQL的JDBC驱动程序
@@ -111,39 +134,45 @@ public class GenerateEntityMain extends AnAction {
                 dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
                 // 获取连接成功后查询到的表名列表
-                DefaultListModel<String> tableModel = new DefaultListModel<>();
+                DefaultListModel<JCheckBox> checkBoxModel = new DefaultListModel<>();
                 // 填充表名列表
                 while (tables.next()) {
                     String tableName = tables.getString("TABLE_NAME");
-                    tableModel.addElement(tableName);
+                    JCheckBox checkBox = new JCheckBox(tableName);
+                    if (selectedTablesSet.contains(tableName)) {
+                        checkBox.setSelected(true);
+                    }
+                    checkBoxModel.addElement(checkBox);
                 }
-
-                // 创建一个列表框来显示表名
-                JList<String> tableList = new JList<>(tableModel);
-                // 设置列表框为多选模式
-                tableList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                // 添加列表框到滚动面板中
-                JScrollPane scrollPane = new JScrollPane(tableList);
 
                 // 创建一个完成按钮
                 JButton doneButton = new JButton("完成");
                 doneButton.addActionListener(e1 -> {
+                    // 清空之前选中的表集合
+                    selectedTablesSet.clear();
                     // 获取用户选中的表名
-                    List<String> selectedTables = tableList.getSelectedValuesList();
-                    // 将选中的表名以逗号分隔的形式填充到原来的面板中的Label上
+                    for (int i = 0; i < checkBoxModel.size(); i++) {
+                        JCheckBox checkBox = checkBoxModel.getElementAt(i);
+                        if (checkBox.isSelected()) {
+                            selectedTablesSet.add(checkBox.getText());
+                        }
+                    }
+                    // 在原来的面板上添加Label，显示用户选择的表名
                     StringBuilder selectedTableNames = new StringBuilder();
-                    for (String tableName : selectedTables) {
+                    for (String tableName : selectedTablesSet) {
                         selectedTableNames.append(tableName).append(",");
                     }
                     // 去除最后一个逗号
                     if (selectedTableNames.length() > 0) {
                         selectedTableNames.deleteCharAt(selectedTableNames.length() - 1);
                     }
+                    // 设置选中的表名到选中的表名标签
+                    selectedTablesLabel.setText(selectedTableNames.toString());
                     excludeTableNames = selectedTableNames.toString().split(",");
-                    // 在原来的面板上添加Label，显示用户选择的表名
-                    JLabel selectedTablesLabel = new JLabel(selectedTableNames.toString());
-                    panel.add(new JLabel("排除的数据库表:"));
-                    panel.add(selectedTablesLabel);
+                    // 如果标签还没有添加到面板上，就添加它
+                    if (selectedTablesLabel.getParent() == null) {
+                        panel.add(selectedTablesLabel);
+                    }
                     // 刷新面板
                     panel.revalidate();
                     panel.repaint();
@@ -151,8 +180,13 @@ public class GenerateEntityMain extends AnAction {
                     dialog.dispose();
                 });
 
-                // 添加滚动面板和完成按钮到对话框中
-                dialog.getContentPane().add(scrollPane, BorderLayout.CENTER);
+                // 创建一个面板来容纳复选框
+                JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
+                for (int i = 0; i < checkBoxModel.size(); i++) {
+                    checkBoxPanel.add(checkBoxModel.getElementAt(i));
+                }
+                // 添加复选框面板和完成按钮到对话框中
+                dialog.getContentPane().add(new JScrollPane(checkBoxPanel), BorderLayout.CENTER);
                 dialog.getContentPane().add(doneButton, BorderLayout.SOUTH);
 
                 // 设置对话框大小并显示
@@ -172,7 +206,7 @@ public class GenerateEntityMain extends AnAction {
             }
         });
 
-        panel.add(connectButton);
+        panel.add(connectButton, Component.CENTER_ALIGNMENT);
 
         builder.setCenterPanel(panel);
         builder.addOkAction().setText("下一步");
@@ -189,7 +223,6 @@ public class GenerateEntityMain extends AnAction {
             // 执行 generateMethod() 方法
             try {
                 generateMethod(e.getProject().getName(), chosenFiles[0], ipField.getText(), portField.getText(), accountField.getText(), passwordField.getText(), databaseField.getText(), authorField.getText(), excludeTableNames);
-                excludeTableNames = null;
                 // 成功生成代码，保存输入的值
                 propertiesComponent.setValue("lastHost", ipField.getText());
                 propertiesComponent.setValue("lastPort", portField.getText());
@@ -197,6 +230,8 @@ public class GenerateEntityMain extends AnAction {
                 propertiesComponent.setValue("lastPassword", passwordField.getText());
                 propertiesComponent.setValue("lastDatabase", databaseField.getText());
                 propertiesComponent.setValue("lastAuthor", authorField.getText());
+                String[] tablesArray = selectedTablesSet.toArray(new String[0]);
+                propertiesComponent.setValues("selectedTables", tablesArray);
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
                 Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以尝试右击文件夹再点击从磁盘重新加载或重启IDEA）", "运行成功");
