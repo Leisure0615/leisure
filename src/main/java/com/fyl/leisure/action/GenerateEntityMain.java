@@ -100,12 +100,12 @@ public class GenerateEntityMain extends AnAction {
         JButton connectButton = new JButton("排除指定表");
         // 检查之前是否选中过该表，如果是，则设置为选中状态
         String[] tableNames = propertiesComponent.getValues("selectedTables");
-        String name = String.join(",", tableNames);
         if (tableNames != null) {
+            String name = String.join(",", tableNames);
             selectedTablesSet.addAll(Arrays.asList(tableNames));
+            excludeTableNames = tableNames;
+            selectedTablesLabel.setText(name);
         }
-        excludeTableNames = tableNames;
-        selectedTablesLabel.setText(name);
         // 如果标签还没有添加到面板上，就添加它
         if (selectedTablesLabel.getParent() == null && !(tableNames == null || tableNames.length == 0)) {
             panel.add(new JLabel("排除的表:"));
