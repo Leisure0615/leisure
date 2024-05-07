@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -91,8 +92,10 @@ public class GenerateEntityMain extends AnAction {
         panel.add(databaseField);
         panel.add(new JLabel("Author:"));
         panel.add(authorField);
-        panel.add(new JLabel("排除的数据库表:"));
-
+        if (selectedTablesLabel.getParent() != null) {
+            panel.add(new JLabel("排除的表:"));
+            panel.add(selectedTablesLabel);
+        }
         // 添加连接数据库按钮
         JButton connectButton = new JButton("排除指定表");
         // 检查之前是否选中过该表，如果是，则设置为选中状态
@@ -104,7 +107,8 @@ public class GenerateEntityMain extends AnAction {
         excludeTableNames = tableNames;
         selectedTablesLabel.setText(name);
         // 如果标签还没有添加到面板上，就添加它
-        if (selectedTablesLabel.getParent() == null) {
+        if (selectedTablesLabel.getParent() == null && !(tableNames == null || tableNames.length == 0)) {
+            panel.add(new JLabel("排除的表:"));
             panel.add(selectedTablesLabel);
         }
 
@@ -171,6 +175,7 @@ public class GenerateEntityMain extends AnAction {
                     excludeTableNames = selectedTableNames.toString().split(",");
                     // 如果标签还没有添加到面板上，就添加它
                     if (selectedTablesLabel.getParent() == null) {
+                        panel.add(new JLabel("排除的表:"));
                         panel.add(selectedTablesLabel);
                     }
                     // 刷新面板
@@ -235,13 +240,16 @@ public class GenerateEntityMain extends AnAction {
                 // 成功生成代码，关闭对话框
                 builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
                 Messages.showInfoMessage("生成代码成功（代码已生成在文件中，若IDEA目录结构中没有显示，可以尝试右击文件夹再点击从磁盘重新加载或重启IDEA）", "运行成功");
-                // 刷新侧边栏目录
+                // 刷新侧边栏目录和重载磁盘
                 ApplicationManager.getApplication().runWriteAction(() -> {
                     ProjectView projectView = ProjectView.getInstance(project);
                     if (projectView != null) {
                         projectView.refresh();
                     }
                 });
+                //重新载入文件
+                VirtualFile chooseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
+                chooseDir.refresh(false, true);
             } catch (Exception ex) {
                 Messages.showErrorDialog("请检查数据库连接验证信息和数据库名是否输入正确", "生成实体类代码失败");
             }
