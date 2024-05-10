@@ -1,7 +1,9 @@
 package com.fyl.leisure.dto;
 
+import com.fyl.leisure.vo.FilePathVO;
 import com.fyl.leisure.vo.FiledVO;
 import com.intellij.openapi.vfs.VirtualFile;
+import freemarker.template.Configuration;
 
 import java.util.List;
 
@@ -53,6 +55,44 @@ public class CreateFileDTO {
      */
     private String authorField;
 
+    /**
+     * Service路径名称
+     */
+    private String servicePath;
+
+    /**
+     * DTO与VO路径对象
+     */
+    private FilePathVO filePathVO;
+
+    /**
+     * 模板设置对象
+     */
+    private Configuration configuration;
+
+    public String getServicePath() {
+        return this.servicePath;
+    }
+
+    public void setServicePath(String servicePath) {
+        this.servicePath = servicePath;
+    }
+
+    public FilePathVO getFilePathVO() {
+        return this.filePathVO;
+    }
+
+    public void setFilePathVO(FilePathVO filePathVO) {
+        this.filePathVO = filePathVO;
+    }
+
+    public Configuration getConfiguration() {
+        return this.configuration;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     public List<FiledVO> getFiledVOS() {
         return this.filedVOS;

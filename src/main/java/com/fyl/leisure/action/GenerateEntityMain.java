@@ -50,7 +50,7 @@ public class GenerateEntityMain extends AnAction {
     JLabel selectedTablesLabel = new JLabel();
 
     public GenerateEntityMain() {
-        super("构建entity、mapper代码");
+        super("新建MybatisPlus Dao层代码");
     }
 
     @Override
