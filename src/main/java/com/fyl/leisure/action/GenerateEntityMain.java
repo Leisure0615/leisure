@@ -402,7 +402,7 @@ public class GenerateEntityMain extends AnAction {
         List<TableFill> tableFills = new ArrayList<>();
         tableFills.add(new TableFill("create_user_id", FieldFill.INSERT));
         tableFills.add(new TableFill("create_user_name", FieldFill.INSERT));
-        tableFills.add(new TableFill("create_time ", FieldFill.INSERT));
+        tableFills.add(new TableFill("create_time", FieldFill.INSERT));
         tableFills.add(new TableFill("update_user_id", FieldFill.INSERT_UPDATE));
         tableFills.add(new TableFill("update_user_name", FieldFill.INSERT_UPDATE));
         tableFills.add(new TableFill("update_time", FieldFill.INSERT_UPDATE));
