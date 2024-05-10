@@ -1,10 +1,7 @@
 package ${package};
 
-import com.baomidou.mybatisplus.extension.activerecord.Model;
-import java.io.Serializable;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import io.swagger.annotations.ApiModelProperty;
 
 /**

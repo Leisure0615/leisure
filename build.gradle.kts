@@ -34,6 +34,7 @@ dependencies {
     implementation("velocity-tools:velocity-tools:1.4")
     implementation("org.apache.velocity:velocity-engine-core:2.3")
     implementation("org.apache.logging.log4j:log4j:2.17.2")
+    implementation("cn.hutool:hutool-all:5.8.21")
 }
 
 // Set the JVM language level used to build the project.

@@ -127,7 +127,7 @@ public class GenerateOperationFiles extends AnAction {
             generateDir(createFileDTO);
         });
         builder.show();
-        chooseDir.refresh(true, true);
+        chooseDir.refresh(false,true);
     }
 
     private static Optional<IdFieldAndDescription> getIdField(List<FiledVO> filedVOS) {

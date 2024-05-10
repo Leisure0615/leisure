@@ -64,14 +64,14 @@ public class ${className}Controller {
 
     @PostMapping("add${className}.do")
     @ApiOperation("新增${entityDescription}信息")
-    public Result<Object> add${className}(${className}Dto ${classObject}Dto){
+    public Result<Void> add${className}(${className}Dto ${classObject}Dto){
         ${classObject}Service.add${className}(${classObject}Dto);
         return Result.success();
     }
 
     @PostMapping("update${className}.do")
     @ApiOperation("修改${entityDescription}信息")
-    public Result<Object> update${className}(${className}Dto ${classObject}Dto){
+    public Result<Void> update${className}(${className}Dto ${classObject}Dto){
          ${classObject}Service.update${className}(${classObject}Dto);
          return Result.success();
     }
@@ -81,7 +81,7 @@ public class ${className}Controller {
     @ApiImplicitParams({
         @ApiImplicitParam(value = "${idField}", name = "${idDescription}", dataType = "string", paramType = "query", required = true)
     })
-    public Result<Object> delete${className}(String ${idField}){
+    public Result<Void> delete${className}(String ${idField}){
          ${classObject}Service.delete${className}(${idField});
          return Result.success();
      }

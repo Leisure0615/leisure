@@ -9,7 +9,6 @@ import com.github.yulichang.wrapper.MPJLambdaWrapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -54,7 +53,6 @@ public class ${className}Service {
     * 根据Id查询
     * @param ${idField}
     */
-    @Transactional(rollbackFor = Exception.class)
     public ${className} get${className} (String ${idField}) {
         return ${classObject}Dao.getById(${idField});
     }
@@ -63,7 +61,6 @@ public class ${className}Service {
     * 新增方法
     * @param ${classObject}Dto
     */
-    @Transactional(rollbackFor = Exception.class)
     public void add${className}(${className}Dto ${classObject}Dto) {
         ${className} ${classObject} = new ${className}();
         BeanUtils.copyProperties(${classObject}Dto,${classObject});
@@ -75,7 +72,6 @@ public class ${className}Service {
     * 修改方法
     * @param ${classObject}Dto
     */
-    @Transactional(rollbackFor = Exception.class)
     public void update${className}(${className}Dto ${classObject}Dto) {
         ${className} ${classObject} = new ${className}();
         BeanUtils.copyProperties(${classObject}Dto,${classObject});
@@ -86,7 +82,6 @@ public class ${className}Service {
     * 删除方法
     * @param ${idField}
     */
-    @Transactional(rollbackFor = Exception.class)
     public void delete${className}(String ${idField}) {
         ${classObject}Dao.removeById(${idField});
     }
