@@ -17,7 +17,9 @@ public class ${className}Dto{
 <#list fieldList as field>
     <#if field.fieldAnnotation?? && field.fieldAnnotation?has_content>
         <#list field.fieldAnnotation as annotation>
+            <#if annotation?string != "@TableId">
     ${annotation}
+            </#if>
         </#list>
     </#if>
     private ${field.fieldType} ${field.fieldName};

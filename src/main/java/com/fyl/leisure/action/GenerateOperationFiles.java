@@ -5,8 +5,8 @@ import com.fyl.leisure.dto.CreateFileDTO;
 import com.fyl.leisure.vo.EntityVO;
 import com.fyl.leisure.vo.FilePathVO;
 import com.fyl.leisure.vo.FiledVO;
-import com.fyl.leisure.vo.IdFieldAndDescription;
-import com.github.javaparser.JavaParser;
+
+import com.github.javaparser.JavaParser;import com.fyl.leisure.vo.IdFieldAndDescription;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
@@ -55,11 +55,13 @@ public class GenerateOperationFiles extends AnAction {
 
         super("新建Controller、Service代码");
     }
+
     /******************************************             可修改参数              ****************************************/
     private final static String parentDirName = "mariadb";//实体类存放目录
 
     private final static String[] removeField = {"deleteTime", "createUserId", "createUserName", "createTime", "isDetected", "updateTime",
             "updateUserName", "updateUserId", "deleted", "serialVersionUID"};//不需要放进DTO、Vo的字段
+
     /*********************************************************************************************************************/
 
     @Override
@@ -96,8 +98,8 @@ public class GenerateOperationFiles extends AnAction {
         IdFieldAndDescription idFieldAndDescription = optionalIdFieldAndDescription.get();
         String idField = idFieldAndDescription.getIdField();
         String idDescription = idFieldAndDescription.getIdDescription();
-        if(idDescription==null){
-            idDescription=idField;
+        if (idDescription == null) {
+            idDescription = idField;
         }
         //获取@author信息
         // 获取上次保存的值
@@ -127,7 +129,7 @@ public class GenerateOperationFiles extends AnAction {
             generateDir(createFileDTO);
         });
         builder.show();
-        chooseDir.refresh(false,true);
+        chooseDir.refresh(false, true);
     }
 
     private static Optional<IdFieldAndDescription> getIdField(List<FiledVO> filedVOS) {
@@ -254,7 +256,18 @@ public class GenerateOperationFiles extends AnAction {
      * @param createFileDTO 创建文件传输对象
      */
     private static void createController(CreateFileDTO createFileDTO) throws IOException, TemplateException {
-        VirtualFile controller = createFileDTO.getChooseDir().createChildDirectory(null, "controller");
+        VirtualFile[] children = createFileDTO.getChooseDir().getChildren();
+        VirtualFile controller =null;
+        boolean isExit=false;
+        for (VirtualFile child : children) {
+            if("controller".equals(child.getName())){
+                controller=child;
+                isExit=true;
+            }
+        }
+        if(!isExit){
+            controller=createFileDTO.getChooseDir().createChildDirectory(null, "controller");
+        }
         // 将类名字首字母转换为小写
         char firstCharLower = Character.toLowerCase(createFileDTO.getClassName().charAt(0));
         String remainingString = createFileDTO.getClassName().substring(1);
@@ -273,6 +286,12 @@ public class GenerateOperationFiles extends AnAction {
         dataMap.put("author", createFileDTO.getAuthorField());
         dataMap.put("entityDescription", createFileDTO.getEntityDescription());
         dataMap.put("idDescription", createFileDTO.getIdDescription());
+        //判断文件是否已存在
+        for (VirtualFile child : controller.getChildren()) {
+            if((createFileDTO.getClassName() + "Controller.java").equals(child.getName())){
+                child.delete(child.getPath());
+            }
+        }
         // step4 加载模版文件
         Template template = createFileDTO.getConfiguration().getTemplate("Controller.ftl");
         // step5 生成数据
@@ -288,7 +307,18 @@ public class GenerateOperationFiles extends AnAction {
      * @param createFileDTO 创建文件传输对象
      */
     private static String createService(CreateFileDTO createFileDTO) throws IOException, TemplateException {
-        VirtualFile service = createFileDTO.getChooseDir().createChildDirectory(null, "service");
+        VirtualFile[] children = createFileDTO.getChooseDir().getChildren();
+        VirtualFile service =null;
+        boolean isExit=false;
+        for (VirtualFile child : children) {
+            if("service".equals(child.getName())){
+                service=child;
+                isExit=true;
+            }
+        }
+        if(!isExit){
+            service=createFileDTO.getChooseDir().createChildDirectory(null, "service");
+        }
         // 将类名字首字母转换为小写
         char firstCharLower = Character.toLowerCase(createFileDTO.getClassName().charAt(0));
         String remainingString = createFileDTO.getClassName().substring(1);
@@ -312,6 +342,12 @@ public class GenerateOperationFiles extends AnAction {
         dataMap.put("idField", createFileDTO.getIdField());
         dataMap.put("IdField", IdField);
         dataMap.put("author", createFileDTO.getAuthorField());
+        //判断文件是否已存在
+        for (VirtualFile child : service.getChildren()) {
+            if((createFileDTO.getClassName() + "Service.java").equals(child.getName())){
+                child.delete(child.getPath());
+            }
+        }
         // step4 加载模版文件
         Template template = createFileDTO.getConfiguration().getTemplate("Service.ftl");
         // step5 生成数据
@@ -330,7 +366,18 @@ public class GenerateOperationFiles extends AnAction {
      * @return FilePathVO DTO与VO路径对象
      */
     private static FilePathVO createModel(CreateFileDTO createFileDTO) throws Exception {
-        VirtualFile model = createFileDTO.getChooseDir().createChildDirectory(null, "model");
+        VirtualFile model = null;
+        boolean isExit=false;
+        VirtualFile[] children = createFileDTO.getChooseDir().getChildren();
+        for (VirtualFile child : children) {
+            if ("model".equals(child.getName())) {
+                model = child;
+                isExit=true;
+            }
+        }
+        if(!isExit){
+            model = createFileDTO.getChooseDir().createChildDirectory(null, "model");
+        }
         FilePathVO filePathVO = new FilePathVO();
         filePathVO.setDtoPath(creatDTO(createFileDTO, model));
         filePathVO.setVoPath(creatVO(createFileDTO, model));
@@ -344,13 +391,30 @@ public class GenerateOperationFiles extends AnAction {
      * @param model         model目录对象
      */
     private static String creatVO(CreateFileDTO createFileDTO, VirtualFile model) throws Exception {
-        VirtualFile vo = model.createChildDirectory(null, "vo");
+        VirtualFile[] children = model.getChildren();
+        VirtualFile vo =null;
+        boolean isExit=false;
+        for (VirtualFile child : children) {
+            if ("vo".equals(child.getName())) {
+                vo=child;
+                isExit=true;
+            }
+        }
+        if(!isExit){
+            vo = model.createChildDirectory(null, "vo");
+        }
         Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("package", convertPathToPackageName(vo.getPath()));
         dataMap.put("className", createFileDTO.getClassName());
         dataMap.put("fieldList", createFileDTO.getFiledVOS());
         dataMap.put("date", currentTime());
         dataMap.put("author", createFileDTO.getAuthorField());
+        //判断文件是否已存在
+        for (VirtualFile child : vo.getChildren()) {
+            if((createFileDTO.getClassName() + "Vo.java").equals(child.getName())){
+                child.delete(child.getPath());
+            }
+        }
         // step4 加载模版文件
         Template template = createFileDTO.getConfiguration().getTemplate("VO.ftl");
         // step5 生成数据
@@ -369,13 +433,30 @@ public class GenerateOperationFiles extends AnAction {
      * @param model         model目录对象
      */
     private static String creatDTO(CreateFileDTO createFileDTO, VirtualFile model) throws Exception {
-        VirtualFile dto = model.createChildDirectory(null, "dto");
+        VirtualFile[] children = model.getChildren();
+        VirtualFile dto =null;
+        boolean isExit=false;
+        for (VirtualFile child : children) {
+            if ("dto".equals(child.getName())) {
+                dto=child;
+                isExit=true;
+            }
+        }
+        if(!isExit){
+            dto = model.createChildDirectory(null, "dto");
+        }
         Map<String, Object> dataMap = new HashMap<>();
         dataMap.put("package", convertPathToPackageName(dto.getPath()));
         dataMap.put("className", createFileDTO.getClassName());
         dataMap.put("fieldList", createFileDTO.getFiledVOS());
         dataMap.put("date", currentTime());
         dataMap.put("author", createFileDTO.getAuthorField());
+        //判断文件是否已存在
+        for (VirtualFile child : dto.getChildren()) {
+            if((createFileDTO.getClassName() + "Dto.java").equals(child.getName())){
+                child.delete(child.getPath());
+            }
+        }
         // step4 加载模版文件
         Template template = createFileDTO.getConfiguration().getTemplate("DTO.ftl");
         // step5 生成数据

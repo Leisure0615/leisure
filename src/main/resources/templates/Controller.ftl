@@ -38,7 +38,7 @@ public class ${className}Controller {
     @GetMapping("page${className}.do")
     @ApiOperation("分页查询${entityDescription}信息")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "searchKey", name = "关键词搜索", dataType = "string", paramType = "query", required = false)
+        @ApiImplicitParam(value = "关键词搜索", name = "searchKey", dataType = "string", paramType = "query", required = false)
     })
     public Result<Pagination<${className}Vo>> page${className}(Pagination<${className}Vo> page, String searchKey){
         return Result.success(${classObject}Service.page${className}(page,searchKey));
@@ -47,7 +47,7 @@ public class ${className}Controller {
     @GetMapping("list${className}.do")
     @ApiOperation("列表查询${entityDescription}信息")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "searchKey", name = "关键词搜索", dataType = "string", paramType = "query", required = false)
+        @ApiImplicitParam(value = "关键词搜索", name = "searchKey", dataType = "string", paramType = "query", required = false)
     })
     public Result<List<${className}Vo>> list${className}(String searchKey){
         return Result.success(${classObject}Service.list${className}(searchKey));
@@ -56,7 +56,7 @@ public class ${className}Controller {
     @GetMapping("get${className}.do")
     @ApiOperation("根据Id查询${entityDescription}信息")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "${idField}", name = "${idDescription}", dataType = "string", paramType = "query", required = true)
+        @ApiImplicitParam(value = "${idDescription}", name = "${idField}", dataType = "string", paramType = "query", required = true)
     })
     public Result<${className}> get${className}(String ${idField}){
         return Result.success(${classObject}Service.get${className}(${idField}));
@@ -79,7 +79,7 @@ public class ${className}Controller {
     @PostMapping("delete${className}.do")
     @ApiOperation("删除${entityDescription}信息")
     @ApiImplicitParams({
-        @ApiImplicitParam(value = "${idField}", name = "${idDescription}", dataType = "string", paramType = "query", required = true)
+        @ApiImplicitParam(value = "${idDescription}", name = "${idField}", dataType = "string", paramType = "query", required = true)
     })
     public Result<Void> delete${className}(String ${idField}){
          ${classObject}Service.delete${className}(${idField});
