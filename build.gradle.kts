@@ -28,7 +28,7 @@ dependencies {
     implementation("com.baomidou:mybatis-plus-boot-starter:3.5.2")
     implementation("com.github.yulichang:mybatis-plus-join:1.4.6")
     implementation("com.baomidou:mybatis-plus-generator:3.3.2")
-    implementation("io.springfox:springfox-swagger2:2.9.2")
+    implementation("io.springfox:springfox-swagger2:3.0.0")
     implementation("org.projectlombok:lombok:1.18.20")
     implementation("org.freemarker:freemarker:2.3.30")
     implementation("velocity-tools:velocity-tools:1.4")
